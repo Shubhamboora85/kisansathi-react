@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import "./App.css";
 
 // ========== MAIN APP ==========
@@ -157,16 +158,23 @@ Rules:
     <div style={styles.app}>
       {/* Top Bar */}
       <div style={styles.topBar}>
-        <span style={styles.kisanNaam}>🙏 Namaste, {kisanNaam} ji!</span>
-        <span style={styles.dukaanNaam}>🏪 Hanuman Khad Bhandar</span>
-      </div>
+        <motion.div
+  style={styles.topBar}
+  initial={{ y: -60 }}
+  animate={{ y: 0 }}
+  transition={{ type: "spring", stiffness: 120 }}
+>
+      </motion.div>
 
       {/* Stage Card */}
       <div style={styles.stageCard}>
-        <div style={styles.stageTitle}>{fasal} — Din {din}</div>
-        <div style={styles.stageName}>{stage}</div>
-        <div style={styles.advice}>💡 {advice}</div>
-      </div>
+        <motion.div
+  style={styles.stageCard}
+  initial={{ opacity: 0, y: 30 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ delay: 0.3 }}
+>
+      </motion.div>
 
       {/* Chat Messages */}
       <div style={styles.chatBox}>
@@ -205,10 +213,12 @@ Rules:
           placeholder="Sawaal likhein..."
         />
         <button onClick={startVoice} style={styles.iconBtn}>
-          {recording ? "🔴" : "🎤"}
-        </button>
-        <button onClick={() => sendMessage(input)} style={styles.sendBtn}>➤</button>
-      </div>
+          <motion.button
+  whileTap={{ scale: 0.8 }}
+  onClick={startVoice}
+  style={styles.iconBtn}
+>
+      </motion.button>
 
       {/* Footer */}
       <div style={styles.footer}>
@@ -218,16 +228,45 @@ Rules:
   );
 }
 
-// ========== SPLASH SCREEN ==========
 function SplashScreen() {
   return (
-    <div style={styles.splash}>
-      <div style={{ fontSize: 80 }}>🌾</div>
-      <h1 style={{ color: "#8B6914" }}>Kisan Saathi</h1>
-      <h3 style={{ color: "#5a3e10" }}>Hanuman Khad Bhandar</h3>
-      <p style={{ color: "#8B6914" }}>Vill. Hatt (Safidon), Jind</p>
-      <p style={{ color: "#2d8a2d" }}>Loading...</p>
-    </div>
+    <motion.div
+      style={styles.splash}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div
+        initial={{ y: -50 }}
+        animate={{ y: 0 }}
+        transition={{ delay: 0.3, type: "spring" }}
+        style={{ fontSize: 80 }}
+      >🌾</motion.div>
+      <motion.h1
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        style={{ color: "#8B6914" }}
+      >Kisan Saathi</motion.h1>
+      <motion.h3
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.7 }}
+        style={{ color: "#5a3e10" }}
+      >Hanuman Khad Bhandar</motion.h3>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.9 }}
+        style={{ color: "#8B6914" }}
+      >Vill. Hatt (Safidon), Jind</motion.p>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.1 }}
+        style={{ color: "#2d8a2d" }}
+      >Loading...</motion.p>
+    </motion.div>
   );
 }
 
@@ -236,34 +275,45 @@ function NaamScreen({ onSubmit }) {
   const [naam, setNaam] = useState("");
   const [shehar, setShehar] = useState("");
   return (
-    <div style={styles.splash}>
-      <div style={{ fontSize: 60 }}>🙏</div>
+    <motion.div
+      style={styles.splash}
+      initial={{ opacity: 0, x: 100 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: "spring", delay: 0.2 }}
+        style={{ fontSize: 60 }}
+      >🙏</motion.div>
       <h2 style={{ color: "#8B6914" }}>Namaste!</h2>
       <p style={{ color: "#5a3e10" }}>Main aapka Kisan Saathi hoon</p>
       <p style={{ color: "#8B6914", fontSize: 13 }}>— Hanuman Khad Bhandar ki taraf se —</p>
-      <input
+      <motion.input
+        whileFocus={{ scale: 1.02, borderColor: "#8B6914" }}
         style={styles.formInput}
         placeholder="Apna naam likhein..."
         value={naam}
         onChange={(e) => setNaam(e.target.value)}
       />
-      <input
+      <motion.input
+        whileFocus={{ scale: 1.02, borderColor: "#8B6914" }}
         style={styles.formInput}
         placeholder="Apna shehar likhein..."
         value={shehar}
         onChange={(e) => setShehar(e.target.value)}
       />
-      <button
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         style={styles.btn}
-        onClick={() => {
-          if (naam && shehar) onSubmit(naam, shehar);
-        }}
+        onClick={() => { if (naam && shehar) onSubmit(naam, shehar); }}
       >
         ✅ Aage Badho
-      </button>
-    </div>
+      </motion.button>
+    </motion.div>
   );
-}
 
 // ========== FASAL SCREEN ==========
 function FasalScreen({ kisanNaam, onSubmit }) {
