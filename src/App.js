@@ -5,6 +5,7 @@ import "./App.css";
 function App() {
   const [screen, setScreen] = useState("splash");
   const [kisanNaam, setKisanNaam] = useState("");
+  // eslint-disable-next-line no-unused-vars
   const [shehar, setShehar] = useState("");
   const [fasal, setFasal] = useState("");
   const [beejDate, setBeejDate] = useState("");
