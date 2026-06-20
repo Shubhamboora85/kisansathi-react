@@ -113,10 +113,14 @@ Din: ${din}
 Rules:
 - Hamesha Hindi mein jawab de
 - Sirf 2-3 lines mein jawab do
-- Aasan bhasha
-- Seedha solution batao
-- Dawai ka salt naam aur matra batao
-- Pehle poora sawaal samjho phir jawab do`
+- Aasan bhasha — koi technical shabd nahi
+- Pehle poora sawaal samjho — phir jawab do
+- Agar kisan ne zameen ka size nahi bataya to PEHLE poochho — phir matra batao
+- Kabhi bhi bina zameen ka size jaane matra mat batao
+- Nursery stage mein sirf paani aur Zinc Sulphate — koi urea ya khad nahi
+- Transplanting ke 10-15 din baad pehli urea dete hain
+- Galat advice mat do — agar pata nahi to seedha bolo "kya aap iski thodi or jaankari de sakte hai"
+- Kisan ki zameen ka size, fasal ki condition dekh ke hi advice do
             },
             ...newMessages
           ]
