@@ -267,10 +267,13 @@ function App() {
     setMessages(newMsgs);
     setInput("");
     setLoading(true);
-    try {
+        try {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
+        headers: { 
+          "Content-Type": "application/json", 
+          "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` 
+        },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           max_tokens: 150,
@@ -294,20 +297,56 @@ Rules:
 - Transplanting ke 10-15 din baad urea
 - Galat advice mat do`
             },
-            ...newMsgs
+            ...newMsgs.slice(-10)
           ]
         })
       });
+
+      // === NEW SAFETY CHECKS START ===
+      if (res.status === 429) {
+        throw new Error("RATE_LIMIT");
+      }
+      if (!res.ok) {
+        throw new Error("SERVER_ERROR");
+      }
+
       const data = await res.json();
-      const jawab = data.choices[0].message.content;
+      const jawab = data?.choices?.[0]?.message?.content;
+      
+      if (!jawab) {
+        throw new Error("INVALID_RESPONSE");
+      }
+
       const updatedMsgs = [...newMsgs, { role: "assistant", content: jawab }];
       setMessages(updatedMsgs);
-      await saveData({ messages: updatedMsgs });
-    } catch {
-      setMessages([...newMsgs, { role: "assistant", content: "Kuch dikkat aayi — dobara try karo!" }]);
+
+      try {
+        await saveData({ messages: updatedMsgs });
+      } catch (dbError) {
+        console.error("Database saving failed:", dbError);
+      }
+      // === NEW SAFETY CHECKS END ===
+
+    } catch (error) {
+      console.error("Detailed Error:", error);
+
+      let errorMessage = "Kuch dikkat aayi — dobara try karo!";
+      
+      if (error.message === "RATE_LIMIT") {
+        errorMessage = "Server busy hai (Too Many Requests). Ek minute baad try karein!";
+      } else if (error.message === "SERVER_ERROR" || error.message === "INVALID_RESPONSE") {
+        errorMessage = "API Response mein dikkat hai. Kripya thoda ruk kar try karein.";
+      } else if (!navigator.onLine) {
+        errorMessage = "Apna internet connection check karein!";
+      }
+
+      setMessages([...newMsgs, { role: "assistant", content: errorMessage }]);
     }
+
     setLoading(false);
   };
+
+
 
   // ===== SPLASH =====
   if (screen === "splash") return (
@@ -618,7 +657,10 @@ Rules:
 
       {/* Footer */}
       <div style={{ ...styles.footer, position: "relative", zIndex: 1 }}>
-        🌾 Hanuman Khad Bhandar, Vill. Hatt (Safidon), Jind 🌾
+        <div>🌾 Hanuman Khad Bhandar, Vill. Hatt (Safidon), Jind 🌾</div>
+<div style={{fontSize: 10, color: "#a07030", marginTop: 3}}>
+  ⚠️ Ye AI hai — galat advice ho sakti hai, expert se zaroor milein
+</div>
       </div>
     </div>
   );
