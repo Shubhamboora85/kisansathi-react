@@ -12,7 +12,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===== REALISTIC FARM BACKGROUND =====
+// ===== REALISTIC FARM BACKGROUND WITH FIXED SCROLL FIX =====
 function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const hour = new Date().getHours();
 
@@ -28,12 +28,12 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
 
   const getPlantHeight = () => {
     if (din <= 5) return 0;
-    if (din <= 15) return 10;
-    if (din <= 25) return 20;
-    if (din <= 50) return 38;
-    if (din <= 80) return 58;
-    if (din <= 110) return 72;
-    return 68;
+    if (din <= 15) return 14;
+    if (din <= 25) return 26;
+    if (din <= 50) return 46;
+    if (din <= 80) return 66;
+    if (din <= 110) return 78;
+    return 72;
   };
 
   const plantH = getPlantHeight();
@@ -41,8 +41,15 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const hasEar = din > 80;
   const plantColor = isGolden ? "#b8860b" : "#1a5c2a";
   const leafColor = isGolden ? "#d4a020" : "#2d8a3a";
-  const windAngle = windSpeed > 8 ? 20 : windSpeed > 4 ? 11 : 5;
-  const cols = 14;
+  const windAngle = windSpeed > 8 ? 18 : windSpeed > 4 ? 10 : 4;
+  
+  // Total 18 columns aur 3 layered rows khet ko ghana (dense) banane ke liye
+  const cols = 18; 
+  const rows = [
+    { zIndex: 3, baseY: 236, opacity: 1.0, scale: 1.0 },   // Saamne wali row
+    { zIndex: 2, baseY: 230, opacity: 0.85, scale: 0.85 }, // Beech wali row
+    { zIndex: 1, baseY: 224, opacity: 0.7, scale: 0.7 }    // Piche wali row
+  ];
 
   // Sun position
   const sunX = hour < 12 ? 60 + hour * 18 : 400 - (hour - 12) * 18;
@@ -50,7 +57,16 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
 
   return (
     <svg viewBox="0 0 480 300"
-      style={{ position: "absolute", bottom: 0, left: 0, right: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }}
+      style={{ 
+        position: "fixed", // SCROLL FIX: Background ko ek jagah lock kiya taaki chat scrolling se zoom na ho
+        bottom: 0, 
+        left: 0, 
+        right: 0, 
+        width: "100vw", 
+        height: "100vh", 
+        pointerEvents: "none", 
+        zIndex: 0 
+      }}
       preserveAspectRatio="xMidYMax slice">
       <defs>
         <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
@@ -59,21 +75,26 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
           <stop offset="100%" stopColor={sky.bottom} />
         </linearGradient>
         <linearGradient id="groundG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3a6b3a" />
-          <stop offset="100%" stopColor="#2a4a2a" />
+          <stop offset="0%" stopColor="#2e592e" />
+          <stop offset="100%" stopColor="#1e381e" />
         </linearGradient>
         <linearGradient id="soilG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#7a5230" />
-          <stop offset="100%" stopColor="#5a3a20" />
+          <stop offset="0%" stopColor="#664428" />
+          <stop offset="100%" stopColor="#442a14" />
         </linearGradient>
         <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#5aaae0" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#3a8ab0" stopOpacity="0.4" />
+          <stop offset="0%" stopColor="#4ea3df" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#2c7fa8" stopOpacity="0.35" />
         </linearGradient>
         <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#fff7a0" stopOpacity="0.5" />
           <stop offset="100%" stopColor="#fff7a0" stopOpacity="0" />
         </radialGradient>
+        <linearGradient id="treeTrunk" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#3d2511" />
+          <stop offset="70%" stopColor="#5c3a1a" />
+          <stop offset="100%" stopColor="#26160a" />
+        </linearGradient>
       </defs>
 
       {/* SKY */}
@@ -93,7 +114,6 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
         <g>
           <circle cx="390" cy="38" r="20" fill="#dde6f0" opacity="0.92" />
           <circle cx="399" cy="33" r="16" fill={sky.top} opacity="0.95" />
-          {/* Moon craters */}
           <circle cx="383" cy="42" r="3" fill="#c0ccd8" opacity="0.4" />
           <circle cx="391" cy="30" r="2" fill="#c0ccd8" opacity="0.3" />
         </g>
@@ -102,11 +122,9 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
       {/* STARS */}
       {isNight && [
         [40,18],[90,32],[140,12],[195,38],[248,18],[295,32],
-        [345,14],[415,28],[65,52],[175,58],[328,48],[455,18],
-        [125,42],[275,62],[408,52],[22,35],[460,42],[310,70]
+        [345,14],[415,28],[65,52],[175,58],[328,48],[455,18]
       ].map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={1 + (i % 3) * 0.5} fill="white"
-          opacity={0.5 + (i % 4) * 0.12} />
+        <circle key={i} cx={x} cy={y} r={1 + (i % 3) * 0.5} fill="white" opacity={0.6} />
       ))}
 
       {/* CLOUDS */}
@@ -125,39 +143,30 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
         </g>
       )}
 
-      {/* RAIN CLOUDS (extra dark) */}
-      {isRain && (
-        <g opacity="0.75">
-          <ellipse cx="240" cy="60" rx="70" ry="24" fill="#3a4a5a" />
-          <ellipse cx="195" cy="68" rx="48" ry="19" fill="#3a4a5a" />
-          <ellipse cx="285" cy="68" rx="52" ry="19" fill="#3a4a5a" />
-        </g>
-      )}
+      {/* HORIZON */}
+      <rect x="0" y="185" width="480" height="15" fill="#1e441e" opacity="0.85" />
 
-      {/* HORIZON / DISTANT FIELD */}
-      <rect x="0" y="185" width="480" height="15" fill="#2a5a2a" opacity="0.7" />
-
-      {/* DISTANT TREES on horizon */}
-      {[55, 130, 230, 320, 410, 455].map((tx, i) => (
-        <g key={i} opacity={0.45 + (i % 2) * 0.1}>
-          <rect x={tx - 2} y="162" width="4" height="25" fill="#1a3a1a" />
-          <ellipse cx={tx} cy="157" rx={10 + (i % 3) * 3} ry={13 + (i % 2) * 4} fill="#1e4a1e" />
+      {/* REALISTIC SHADED TREES (Piche ke ped real lagne ke liye multi-layer shapes) */}
+      {[55, 140, 240, 340, 425].map((tx, i) => (
+        <g key={i} opacity={0.7 + (i % 2) * 0.15}>
+          <path d={`M${tx-2},186 L${tx+2},186 L${tx+1},158 L${tx-1},158 Z`} fill="url(#treeTrunk)" />
+          <ellipse cx={tx} cy="154" rx={14} ry={16} fill="#143d14" />
+          <ellipse cx={tx-5} cy="150" rx={9} ry={10} fill="#1c4f1c" />
+          <ellipse cx={tx+5} cy="152" rx={9} ry={10} fill="#235c23" />
+          <circle cx={tx} cy="142" r="8" fill="#2c6e2c" />
         </g>
       ))}
 
-      {/* MAIN GROUND */}
+      {/* MAIN GROUND & SOIL */}
       <rect x="0" y="198" width="480" height="102" fill="url(#groundG)" />
-
-      {/* SOIL */}
       <rect x="0" y="238" width="480" height="62" fill="url(#soilG)" />
 
-      {/* WATER LAYER for Rice */}
+      {/* WATER LAYER */}
       {(fasal === "🌾 Chawal (Rice)" || !fasal) && din > 8 && (
         <g>
-          <rect x="0" y="228" width="480" height="12" fill="url(#waterG)" />
-          {/* Water shimmer */}
+          <rect x="0" y="226" width="480" height="15" fill="url(#waterG)" />
           {[60, 160, 260, 360].map((wx, i) => (
-            <ellipse key={i} cx={wx} cy="234" rx="30" ry="2" fill="white" opacity="0.12" />
+            <ellipse key={i} cx={wx} cy="232" rx="35" ry="2.5" fill="white" opacity="0.18" />
           ))}
         </g>
       )}
@@ -165,91 +174,68 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
       {/* FIELD ROW LINES */}
       {[0, 1, 2, 3].map(row => (
         <line key={row} x1="0" y1={233 + row * 6} x2="480" y2={233 + row * 6}
-          stroke="#4a7a4a" strokeWidth="0.4" opacity="0.35" />
+          stroke="#3d663d" strokeWidth="0.5" opacity="0.45" />
       ))}
 
-      {/* PLANTS */}
-      {[...Array(cols)].map((_, i) => {
-        const x = 17 + i * (480 / cols);
-        const baseY = 232;
-        const heightVariation = plantH * (0.88 + (i % 4) * 0.04);
+      {/* DENSE CROPS WITH ORGANIC SWAYING ANIMATION */}
+      {rows.map((rowConfig, rIdx) => (
+        <g key={`row-${rIdx}`} opacity={rowConfig.opacity}>
+          {[...Array(cols)].map((_, i) => {
+            const x = 12 + i * (485 / cols) + (rIdx * 7 % 12);
+            const baseY = rowConfig.baseY;
+            const currentH = plantH * rowConfig.scale * (0.86 + ((i + rIdx) % 5) * 0.04);
+            const animDuration = `${1.6 + ((i + rIdx) % 4) * 0.25}s`;
 
-        if (din <= 5) {
-          return (
-            <g key={i}>
-              <ellipse cx={x} cy={baseY + 1} rx="3.5" ry="2" fill="#c8a030" opacity="0.75" />
-            </g>
-          );
-        }
+            if (din <= 5) {
+              return (
+                <g key={`seed-${rIdx}-${i}`}>
+                  <ellipse cx={x} cy={baseY + 1} rx="3" ry="1.8" fill="#a37c20" opacity="0.85" />
+                </g>
+              );
+            }
 
-        if (din <= 18) {
-          return (
-            <g key={i}>
-              <animateTransform attributeName="transform" type="rotate"
-                values={`0 ${x} ${baseY};${windAngle * 0.4} ${x} ${baseY};0 ${x} ${baseY}`}
-                dur={`${2.2 + (i % 4) * 0.3}s`} repeatCount="indefinite" />
-              <line x1={x} y1={baseY} x2={x} y2={baseY - 13} stroke="#3a7a3a" strokeWidth="1.5" />
-              <path d={`M${x},${baseY - 8} Q${x - 7},${baseY - 13} ${x - 10},${baseY - 10}`}
-                stroke="#4a9a4a" strokeWidth="1.3" fill="none" />
-            </g>
-          );
-        }
+            if (din <= 18) {
+              return (
+                <g key={`sprout-${rIdx}-${i}`}>
+                  <animateTransform attributeName="transform" type="rotate"
+                    values={`0 ${x} ${baseY};${windAngle * 0.5} ${x} ${baseY};0 ${x} ${baseY}`}
+                    dur={animDuration} repeatCount="indefinite" />
+                  <path d={`M ${x} ${baseY} Q ${x - 2} ${baseY - currentH*0.5} ${x - 3} ${baseY - currentH}`} 
+                    stroke="#296629" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+                </g>
+              );
+            }
 
-        const sh = heightVariation;
-        const lf = sh * 0.42;
+            return (
+              <g key={`plant-${rIdx}-${i}`}>
+                <animateTransform attributeName="transform" type="rotate"
+                  values={`0 ${x} ${baseY};${windAngle} ${x} ${baseY};${-windAngle * 0.2} ${x} ${baseY};${windAngle * 0.6} ${x} ${baseY};0 ${x} ${baseY}`}
+                  dur={animDuration} repeatCount="indefinite" />
 
-        return (
-          <g key={i}>
-            <animateTransform attributeName="transform" type="rotate"
-              values={`0 ${x} ${baseY};${windAngle} ${x} ${baseY};${-windAngle * 0.25} ${x} ${baseY};${windAngle * 0.65} ${x} ${baseY};0 ${x} ${baseY}`}
-              dur={`${1.4 + (i % 6) * 0.28}s`} repeatCount="indefinite" />
+                {/* Curved stem instead of straight line */}
+                <path d={`M ${x} ${baseY} Q ${x + (windAngle*0.08)} ${baseY - currentH*0.5} ${x} ${baseY - currentH}`}
+                  stroke={plantColor} strokeWidth={2.2 - (rIdx * 0.3)} fill="none" strokeLinecap="round" />
 
-            {/* STEM */}
-            <line x1={x} y1={baseY} x2={x} y2={baseY - sh}
-              stroke={plantColor} strokeWidth={din > 60 ? 2.2 : 1.6} />
+                {/* Organic curved leaves */}
+                <path d={`M ${x} ${baseY - currentH * 0.3} Q ${x - 10} ${baseY - currentH * 0.5} ${x - 14} ${baseY - currentH * 0.35}`}
+                  stroke={leafColor} strokeWidth="1.4" fill="none" strokeLinecap="round" />
+                <path d={`M ${x} ${baseY - currentH * 0.5} Q ${x + 12} ${baseY - currentH * 0.7} ${x + 15} ${baseY - currentH * 0.55}`}
+                  stroke={leafColor} strokeWidth="1.3" fill="none" strokeLinecap="round" />
 
-            {/* LEAF 1 — left lower */}
-            <path d={`M${x},${baseY - sh * 0.28} C${x - lf * 1.1},${baseY - sh * 0.38} ${x - lf * 1.4},${baseY - sh * 0.25} ${x - lf * 1.6},${baseY - sh * 0.18}`}
-              stroke={leafColor} strokeWidth="1.4" fill="none" />
-
-            {/* LEAF 2 — right mid */}
-            <path d={`M${x},${baseY - sh * 0.52} C${x + lf * 1.1},${baseY - sh * 0.62} ${x + lf * 1.4},${baseY - sh * 0.5} ${x + lf * 1.5},${baseY - sh * 0.42}`}
-              stroke={leafColor} strokeWidth="1.4" fill="none" />
-
-            {/* LEAF 3 — left upper (bigger plants) */}
-            {din > 40 && (
-              <path d={`M${x},${baseY - sh * 0.72} C${x - lf * 0.9},${baseY - sh * 0.82} ${x - lf * 1.2},${baseY - sh * 0.7} ${x - lf * 1.3},${baseY - sh * 0.62}`}
-                stroke={leafColor} strokeWidth="1.3" fill="none" />
-            )}
-
-            {/* LEAF 4 — right upper (bigger plants) */}
-            {din > 55 && (
-              <path d={`M${x},${baseY - sh * 0.15} C${x + lf * 0.8},${baseY - sh * 0.25} ${x + lf},${baseY - sh * 0.12} ${x + lf * 1.2},${baseY - sh * 0.05}`}
-                stroke={leafColor} strokeWidth="1.3" fill="none" />
-            )}
-
-            {/* BALI — ear of grain */}
-            {hasEar && (
-              <g>
-                <path d={`M${x},${baseY - sh} Q${x + 9},${baseY - sh - 14} ${x + 6},${baseY - sh - 26}`}
-                  stroke={isGolden ? "#c8a030" : "#5a9a5a"} strokeWidth="1.6" fill="none" />
-                {[0, 1, 2, 3, 4].map(gi => (
-                  <g key={gi}>
-                    <ellipse cx={x + 5 + gi} cy={baseY - sh - 7 - gi * 4}
-                      rx="2.2" ry="1.3"
-                      fill={isGolden ? "#d4a020" : "#6aaa6a"}
-                      transform={`rotate(${-35 + gi * 6}, ${x + 5 + gi}, ${baseY - sh - 7 - gi * 4})`} />
-                    <ellipse cx={x + 7 - gi * 0.5} cy={baseY - sh - 9 - gi * 4}
-                      rx="1.8" ry="1.1"
-                      fill={isGolden ? "#b89018" : "#58985a"}
-                      transform={`rotate(${-20 + gi * 4}, ${x + 7 - gi * 0.5}, ${baseY - sh - 9 - gi * 4})`} />
-                  </g>
-                ))}
+                {/* Crop Ear (Baali) */}
+                {hasEar && (
+                  <path d={`M ${x} ${baseY - currentH} Q ${x + 3} ${baseY - currentH - 5} ${x + 6} ${baseY - currentH - 3}`}
+                    stroke={isGolden ? "#ffd700" : "#6b8e23"} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                )}
               </g>
-            )}
-          </g>
-        );
-      })}
+            );
+          })}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 
       {/* RAIN DROPS */}
       {isRain && [...Array(45)].map((_, i) => (
