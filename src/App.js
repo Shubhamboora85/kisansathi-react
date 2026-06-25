@@ -12,222 +12,238 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===== FASAL GROWING BACKGROUND =====
+// ===== REALISTIC FARM BACKGROUND =====
 function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const hour = new Date().getHours();
-  
-  // Sky colors based on time
+
   const getSkyColors = () => {
-    if (isRain) return { top: "#4a5568", bottom: "#718096" };
-    if (hour >= 5 && hour < 7) return { top: "#f6ad55", bottom: "#fbd38d" }; // Sunrise
-    if (hour >= 7 && hour < 17) return { top: "#2b6cb0", bottom: "#63b3ed" }; // Day
-    if (hour >= 17 && hour < 20) return { top: "#c05621", bottom: "#f6ad55" }; // Sunset
-    return { top: "#1a202c", bottom: "#2d3748" }; // Night
+    if (isRain) return { top: "#3a4a5a", mid: "#5a6a7a", bottom: "#7a8a9a" };
+    if (hour >= 5 && hour < 7) return { top: "#f6934a", mid: "#f6b86a", bottom: "#fbd38d" };
+    if (hour >= 7 && hour < 17) return { top: "#1a6cb0", mid: "#4a9fd0", bottom: "#87CEEB" };
+    if (hour >= 17 && hour < 20) return { top: "#8B2500", mid: "#c05621", bottom: "#f6ad55" };
+    return { top: "#050510", mid: "#0a0a1e", bottom: "#1a1a2e" };
   };
 
   const sky = getSkyColors();
-  
-  // Plant height based on din
+
   const getPlantHeight = () => {
-    if (din <= 10) return 8;
-    if (din <= 25) return 18;
-    if (din <= 50) return 35;
-    if (din <= 80) return 55;
-    if (din <= 110) return 70;
-    return 65;
+    if (din <= 5) return 0;
+    if (din <= 15) return 10;
+    if (din <= 25) return 20;
+    if (din <= 50) return 38;
+    if (din <= 80) return 58;
+    if (din <= 110) return 72;
+    return 68;
   };
 
   const plantH = getPlantHeight();
-  const isGolden = din > 100; // Pakne ka time — golden color
-  const hasEar = din > 80; // Bali aana
-  const plantColor = isGolden ? "#c8a84b" : "#2d6a2d";
-  const leafColor = isGolden ? "#d4a853" : "#38a169";
-  
-  // Wind animation
-  const windAngle = windSpeed > 8 ? 18 : windSpeed > 4 ? 10 : 4;
-  
-  // Number of plant columns
-  const cols = 12;
+  const isGolden = din > 100;
+  const hasEar = din > 80;
+  const plantColor = isGolden ? "#b8860b" : "#1a5c2a";
+  const leafColor = isGolden ? "#d4a020" : "#2d8a3a";
+  const windAngle = windSpeed > 8 ? 20 : windSpeed > 4 ? 11 : 5;
+  const cols = 14;
+
+  // Sun position
+  const sunX = hour < 12 ? 60 + hour * 18 : 400 - (hour - 12) * 18;
+  const sunY = hour < 6 ? 160 : hour < 12 ? 160 - (hour - 6) * 15 : hour < 18 ? 70 + (hour - 12) * 12 : 160;
 
   return (
-    <svg
-      viewBox="0 0 480 280"
-      style={{ position: "absolute", bottom: 0, left: 0, right: 0, width: "100%", pointerEvents: "none", zIndex: 0 }}
-      preserveAspectRatio="xMidYMax meet"
-    >
+    <svg viewBox="0 0 480 300"
+      style={{ position: "absolute", bottom: 0, left: 0, right: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 }}
+      preserveAspectRatio="xMidYMax slice">
       <defs>
-        <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={sky.top} />
+          <stop offset="50%" stopColor={sky.mid} />
           <stop offset="100%" stopColor={sky.bottom} />
         </linearGradient>
-        <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4a7c59" />
-          <stop offset="100%" stopColor="#2d5a3d" />
+        <linearGradient id="groundG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3a6b3a" />
+          <stop offset="100%" stopColor="#2a4a2a" />
         </linearGradient>
-        <linearGradient id="soilGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#6b4226" />
-          <stop offset="100%" stopColor="#4a2c1a" />
+        <linearGradient id="soilG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7a5230" />
+          <stop offset="100%" stopColor="#5a3a20" />
         </linearGradient>
-        <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4299e1" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#2b6cb0" stopOpacity="0.4" />
+        <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#5aaae0" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#3a8ab0" stopOpacity="0.4" />
         </linearGradient>
-        {/* Plant stem gradient */}
-        <linearGradient id="stemGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={leafColor} />
-          <stop offset="100%" stopColor={plantColor} />
-        </linearGradient>
+        <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#fff7a0" stopOpacity="0.5" />
+          <stop offset="100%" stopColor="#fff7a0" stopOpacity="0" />
+        </radialGradient>
       </defs>
 
       {/* SKY */}
-      <rect x="0" y="0" width="480" height="180" fill="url(#skyGrad)" />
+      <rect x="0" y="0" width="480" height="220" fill="url(#skyG)" />
 
-      {/* SUN */}
+      {/* SUN GLOW */}
       {!isNight && !isRain && (
         <g>
-          <circle cx={hour < 12 ? 80 + hour * 10 : 380 - (hour - 12) * 10} cy={hour < 12 ? 140 - hour * 8 : 140 - (24 - hour) * 8} r="22" fill="#fbd38d" opacity="0.9" />
-          <circle cx={hour < 12 ? 80 + hour * 10 : 380 - (hour - 12) * 10} cy={hour < 12 ? 140 - hour * 8 : 140 - (24 - hour) * 8} r="18" fill="#f6e05e" opacity="0.95" />
+          <circle cx={sunX} cy={sunY} r="45" fill="url(#sunGlow)" />
+          <circle cx={sunX} cy={sunY} r="22" fill="#fef08a" opacity="0.95" />
+          <circle cx={sunX} cy={sunY} r="17" fill="#fde047" opacity="1" />
         </g>
       )}
 
       {/* MOON */}
       {isNight && (
         <g>
-          <circle cx="380" cy="40" r="18" fill="#e2e8f0" opacity="0.9" />
-          <circle cx="388" cy="35" r="14" fill={sky.top} opacity="0.9" />
+          <circle cx="390" cy="38" r="20" fill="#dde6f0" opacity="0.92" />
+          <circle cx="399" cy="33" r="16" fill={sky.top} opacity="0.95" />
+          {/* Moon craters */}
+          <circle cx="383" cy="42" r="3" fill="#c0ccd8" opacity="0.4" />
+          <circle cx="391" cy="30" r="2" fill="#c0ccd8" opacity="0.3" />
         </g>
       )}
 
       {/* STARS */}
       {isNight && [
-        [50, 20], [100, 35], [150, 15], [200, 40], [250, 20],
-        [300, 35], [350, 15], [420, 30], [70, 55], [180, 60],
-        [330, 50], [450, 20], [130, 45], [280, 65], [410, 55]
+        [40,18],[90,32],[140,12],[195,38],[248,18],[295,32],
+        [345,14],[415,28],[65,52],[175,58],[328,48],[455,18],
+        [125,42],[275,62],[408,52],[22,35],[460,42],[310,70]
       ].map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r="1.5" fill="white" opacity={0.6 + (i % 4) * 0.1} />
+        <circle key={i} cx={x} cy={y} r={1 + (i % 3) * 0.5} fill="white"
+          opacity={0.5 + (i % 4) * 0.12} />
       ))}
 
       {/* CLOUDS */}
       {!isNight && (
-        <g opacity={isRain ? 0.8 : 0.6}>
-          <ellipse cx="120" cy="45" rx="45" ry="18" fill="white" />
-          <ellipse cx="100" cy="50" rx="30" ry="15" fill="white" />
-          <ellipse cx="150" cy="50" rx="30" ry="15" fill="white" />
-          <ellipse cx="320" cy="35" rx="50" ry="18" fill={isRain ? "#718096" : "white"} />
-          <ellipse cx="300" cy="40" rx="30" ry="14" fill={isRain ? "#718096" : "white"} />
-          <ellipse cx="350" cy="40" rx="35" ry="14" fill={isRain ? "#718096" : "white"} />
+        <g>
+          <g opacity={isRain ? 0.85 : 0.65}>
+            <ellipse cx="110" cy="48" rx="48" ry="18" fill={isRain ? "#5a6a7a" : "white"} />
+            <ellipse cx="88" cy="54" rx="32" ry="14" fill={isRain ? "#5a6a7a" : "white"} />
+            <ellipse cx="138" cy="54" rx="34" ry="14" fill={isRain ? "#5a6a7a" : "white"} />
+          </g>
+          <g opacity={isRain ? 0.85 : 0.55}>
+            <ellipse cx="335" cy="38" rx="55" ry="20" fill={isRain ? "#4a5a6a" : "white"} />
+            <ellipse cx="308" cy="44" rx="36" ry="15" fill={isRain ? "#4a5a6a" : "white"} />
+            <ellipse cx="365" cy="44" rx="38" ry="15" fill={isRain ? "#4a5a6a" : "white"} />
+          </g>
         </g>
       )}
 
-      {/* RAIN CLOUDS */}
+      {/* RAIN CLOUDS (extra dark) */}
       {isRain && (
-        <g opacity="0.7">
-          <ellipse cx="240" cy="55" rx="60" ry="22" fill="#4a5568" />
-          <ellipse cx="200" cy="62" rx="40" ry="18" fill="#4a5568" />
-          <ellipse cx="280" cy="62" rx="45" ry="18" fill="#4a5568" />
+        <g opacity="0.75">
+          <ellipse cx="240" cy="60" rx="70" ry="24" fill="#3a4a5a" />
+          <ellipse cx="195" cy="68" rx="48" ry="19" fill="#3a4a5a" />
+          <ellipse cx="285" cy="68" rx="52" ry="19" fill="#3a4a5a" />
         </g>
       )}
 
-      {/* GROUND BASE */}
-      <rect x="0" y="175" width="480" height="105" fill="url(#groundGrad)" />
-      
-      {/* SOIL/EARTH */}
-      <rect x="0" y="220" width="480" height="60" fill="url(#soilGrad)" />
+      {/* HORIZON / DISTANT FIELD */}
+      <rect x="0" y="185" width="480" height="15" fill="#2a5a2a" opacity="0.7" />
 
-      {/* WATER LAYER (Rice ke liye) */}
-      {(fasal === "🌾 Chawal (Rice)" || !fasal) && din > 10 && (
-        <rect x="0" y="210" width="480" height="12" fill="url(#waterGrad)" />
+      {/* DISTANT TREES on horizon */}
+      {[55, 130, 230, 320, 410, 455].map((tx, i) => (
+        <g key={i} opacity={0.45 + (i % 2) * 0.1}>
+          <rect x={tx - 2} y="162" width="4" height="25" fill="#1a3a1a" />
+          <ellipse cx={tx} cy="157" rx={10 + (i % 3) * 3} ry={13 + (i % 2) * 4} fill="#1e4a1e" />
+        </g>
+      ))}
+
+      {/* MAIN GROUND */}
+      <rect x="0" y="198" width="480" height="102" fill="url(#groundG)" />
+
+      {/* SOIL */}
+      <rect x="0" y="238" width="480" height="62" fill="url(#soilG)" />
+
+      {/* WATER LAYER for Rice */}
+      {(fasal === "🌾 Chawal (Rice)" || !fasal) && din > 8 && (
+        <g>
+          <rect x="0" y="228" width="480" height="12" fill="url(#waterG)" />
+          {/* Water shimmer */}
+          {[60, 160, 260, 360].map((wx, i) => (
+            <ellipse key={i} cx={wx} cy="234" rx="30" ry="2" fill="white" opacity="0.12" />
+          ))}
+        </g>
       )}
 
-      {/* FIELD LINES (rows) */}
-      {[0, 1, 2].map(row => (
-        <line key={row} x1="0" y1={215 + row * 8} x2="480" y2={215 + row * 8}
-          stroke="#5a8a6a" strokeWidth="0.5" opacity="0.4" />
+      {/* FIELD ROW LINES */}
+      {[0, 1, 2, 3].map(row => (
+        <line key={row} x1="0" y1={233 + row * 6} x2="480" y2={233 + row * 6}
+          stroke="#4a7a4a" strokeWidth="0.4" opacity="0.35" />
       ))}
 
       {/* PLANTS */}
       {[...Array(cols)].map((_, i) => {
-        const x = (i + 0.5) * (480 / cols);
-        const baseY = 215;
-        const sway = `rotate(${windAngle}, ${x}, ${baseY})`;
-        
-        if (din <= 5) {
-          // Sirf beej — seed
-          return (
-            <g key={i} transform={`translate(${x}, ${baseY})`}>
-              <ellipse cx="0" cy="0" rx="4" ry="2.5" fill="#c8a84b" opacity="0.8" />
-            </g>
-          );
-        }
+        const x = 17 + i * (480 / cols);
+        const baseY = 232;
+        const heightVariation = plantH * (0.88 + (i % 4) * 0.04);
 
-        if (din <= 15) {
-          // Chhoti sprout — ankur
+        if (din <= 5) {
           return (
             <g key={i}>
-              <animateTransform
-                attributeName="transform"
-                type="rotate"
-                values={`0 ${x} ${baseY};${windAngle * 0.5} ${x} ${baseY};0 ${x} ${baseY}`}
-                dur={`${2 + (i % 3)}s`}
-                repeatCount="indefinite"
-              />
-              <line x1={x} y1={baseY} x2={x} y2={baseY - 12} stroke="#4a7c4a" strokeWidth="1.5" />
-              <ellipse cx={x - 4} cy={baseY - 10} rx="5" ry="2" fill="#48bb78" transform={`rotate(-30, ${x - 4}, ${baseY - 10})`} />
+              <ellipse cx={x} cy={baseY + 1} rx="3.5" ry="2" fill="#c8a030" opacity="0.75" />
             </g>
           );
         }
 
-        // Badi plants — with leaves
-        const stemHeight = plantH;
-        const leafSize = stemHeight * 0.45;
+        if (din <= 18) {
+          return (
+            <g key={i}>
+              <animateTransform attributeName="transform" type="rotate"
+                values={`0 ${x} ${baseY};${windAngle * 0.4} ${x} ${baseY};0 ${x} ${baseY}`}
+                dur={`${2.2 + (i % 4) * 0.3}s`} repeatCount="indefinite" />
+              <line x1={x} y1={baseY} x2={x} y2={baseY - 13} stroke="#3a7a3a" strokeWidth="1.5" />
+              <path d={`M${x},${baseY - 8} Q${x - 7},${baseY - 13} ${x - 10},${baseY - 10}`}
+                stroke="#4a9a4a" strokeWidth="1.3" fill="none" />
+            </g>
+          );
+        }
+
+        const sh = heightVariation;
+        const lf = sh * 0.42;
 
         return (
-          <g key={i} style={{ transformOrigin: `${x}px ${baseY}px` }}>
-            <animateTransform
-              attributeName="transform"
-              type="rotate"
-              values={`0 ${x} ${baseY};${windAngle} ${x} ${baseY};${-windAngle * 0.3} ${x} ${baseY};${windAngle * 0.7} ${x} ${baseY};0 ${x} ${baseY}`}
-              dur={`${1.5 + (i % 5) * 0.3}s`}
-              repeatCount="indefinite"
-            />
-            
-            {/* Main stem */}
-            <line x1={x} y1={baseY} x2={x} y2={baseY - stemHeight}
-              stroke={plantColor} strokeWidth={din > 50 ? 2 : 1.5} />
+          <g key={i}>
+            <animateTransform attributeName="transform" type="rotate"
+              values={`0 ${x} ${baseY};${windAngle} ${x} ${baseY};${-windAngle * 0.25} ${x} ${baseY};${windAngle * 0.65} ${x} ${baseY};0 ${x} ${baseY}`}
+              dur={`${1.4 + (i % 6) * 0.28}s`} repeatCount="indefinite" />
 
-            {/* Left leaf */}
-            <path d={`M ${x} ${baseY - stemHeight * 0.4} Q ${x - leafSize} ${baseY - stemHeight * 0.55} ${x - leafSize * 1.3} ${baseY - stemHeight * 0.35}`}
-              stroke={leafColor} strokeWidth="1.5" fill="none" />
+            {/* STEM */}
+            <line x1={x} y1={baseY} x2={x} y2={baseY - sh}
+              stroke={plantColor} strokeWidth={din > 60 ? 2.2 : 1.6} />
 
-            {/* Right leaf */}
-            <path d={`M ${x} ${baseY - stemHeight * 0.65} Q ${x + leafSize} ${baseY - stemHeight * 0.8} ${x + leafSize * 1.2} ${baseY - stemHeight * 0.6}`}
-              stroke={leafColor} strokeWidth="1.5" fill="none" />
+            {/* LEAF 1 — left lower */}
+            <path d={`M${x},${baseY - sh * 0.28} C${x - lf * 1.1},${baseY - sh * 0.38} ${x - lf * 1.4},${baseY - sh * 0.25} ${x - lf * 1.6},${baseY - sh * 0.18}`}
+              stroke={leafColor} strokeWidth="1.4" fill="none" />
 
-            {/* Extra leaves for bigger plants */}
-            {din > 50 && (
-              <>
-                <path d={`M ${x} ${baseY - stemHeight * 0.2} Q ${x + leafSize * 0.8} ${baseY - stemHeight * 0.35} ${x + leafSize} ${baseY - stemHeight * 0.15}`}
-                  stroke={leafColor} strokeWidth="1.5" fill="none" />
-                <path d={`M ${x} ${baseY - stemHeight * 0.8} Q ${x - leafSize * 0.9} ${baseY - stemHeight * 0.95} ${x - leafSize * 1.1} ${baseY - stemHeight * 0.75}`}
-                  stroke={leafColor} strokeWidth="1.5" fill="none" />
-              </>
+            {/* LEAF 2 — right mid */}
+            <path d={`M${x},${baseY - sh * 0.52} C${x + lf * 1.1},${baseY - sh * 0.62} ${x + lf * 1.4},${baseY - sh * 0.5} ${x + lf * 1.5},${baseY - sh * 0.42}`}
+              stroke={leafColor} strokeWidth="1.4" fill="none" />
+
+            {/* LEAF 3 — left upper (bigger plants) */}
+            {din > 40 && (
+              <path d={`M${x},${baseY - sh * 0.72} C${x - lf * 0.9},${baseY - sh * 0.82} ${x - lf * 1.2},${baseY - sh * 0.7} ${x - lf * 1.3},${baseY - sh * 0.62}`}
+                stroke={leafColor} strokeWidth="1.3" fill="none" />
             )}
 
-            {/* Bali — ear of rice (flowering/harvesting stage) */}
+            {/* LEAF 4 — right upper (bigger plants) */}
+            {din > 55 && (
+              <path d={`M${x},${baseY - sh * 0.15} C${x + lf * 0.8},${baseY - sh * 0.25} ${x + lf},${baseY - sh * 0.12} ${x + lf * 1.2},${baseY - sh * 0.05}`}
+                stroke={leafColor} strokeWidth="1.3" fill="none" />
+            )}
+
+            {/* BALI — ear of grain */}
             {hasEar && (
               <g>
-                {/* Main bali */}
-                <path d={`M ${x} ${baseY - stemHeight} Q ${x + 8} ${baseY - stemHeight - 12} ${x + 5} ${baseY - stemHeight - 22}`}
-                  stroke={isGolden ? "#c8a84b" : "#68a568"} strokeWidth="1.5" fill="none" />
-                {/* Grain dots */}
-                {[0, 1, 2, 3].map(g => (
-                  <ellipse key={g}
-                    cx={x + 5 + g * 1.5}
-                    cy={baseY - stemHeight - 8 - g * 4}
-                    rx="2" ry="1.2"
-                    fill={isGolden ? "#d4a853" : "#68a568"}
-                    transform={`rotate(${-30 + g * 5}, ${x + 5 + g * 1.5}, ${baseY - stemHeight - 8 - g * 4})`}
-                  />
+                <path d={`M${x},${baseY - sh} Q${x + 9},${baseY - sh - 14} ${x + 6},${baseY - sh - 26}`}
+                  stroke={isGolden ? "#c8a030" : "#5a9a5a"} strokeWidth="1.6" fill="none" />
+                {[0, 1, 2, 3, 4].map(gi => (
+                  <g key={gi}>
+                    <ellipse cx={x + 5 + gi} cy={baseY - sh - 7 - gi * 4}
+                      rx="2.2" ry="1.3"
+                      fill={isGolden ? "#d4a020" : "#6aaa6a"}
+                      transform={`rotate(${-35 + gi * 6}, ${x + 5 + gi}, ${baseY - sh - 7 - gi * 4})`} />
+                    <ellipse cx={x + 7 - gi * 0.5} cy={baseY - sh - 9 - gi * 4}
+                      rx="1.8" ry="1.1"
+                      fill={isGolden ? "#b89018" : "#58985a"}
+                      transform={`rotate(${-20 + gi * 4}, ${x + 7 - gi * 0.5}, ${baseY - sh - 9 - gi * 4})`} />
+                  </g>
                 ))}
               </g>
             )}
@@ -236,31 +252,20 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
       })}
 
       {/* RAIN DROPS */}
-      {isRain && [...Array(40)].map((_, i) => (
+      {isRain && [...Array(45)].map((_, i) => (
         <g key={i}>
-          <animateTransform
-            attributeName="transform"
-            type="translate"
-            values={`${(i * 12.3) % 480} -20; ${(i * 12.3 + 15) % 480} 290`}
-            dur={`${0.6 + (i % 5) * 0.08}s`}
-            begin={`${(i % 15) * 0.08}s`}
-            repeatCount="indefinite"
-          />
-          <line x1="0" y1="0" x2="-3" y2="12"
-            stroke="rgba(147,197,253,0.7)" strokeWidth="1.2" />
+          <animateTransform attributeName="transform" type="translate"
+            values={`${(i * 11.2) % 480} -15; ${((i * 11.2) + 18) % 480} 305`}
+            dur={`${0.52 + (i % 6) * 0.07}s`}
+            begin={`${(i % 18) * 0.07}s`}
+            repeatCount="indefinite" />
+          <line x1="0" y1="0" x2="-3.5" y2="13"
+            stroke="rgba(160,210,255,0.72)" strokeWidth="1.3" />
         </g>
       ))}
 
-      {/* HORIZON LINE */}
-      <line x1="0" y1="175" x2="480" y2="175" stroke="#2d6a3d" strokeWidth="1" opacity="0.6" />
-
-      {/* DISTANT TREES */}
-      {[60, 180, 360, 440].map((tx, i) => (
-        <g key={i} opacity="0.5">
-          <line x1={tx} y1="175" x2={tx} y2="148" stroke="#2d5a2d" strokeWidth="2" />
-          <ellipse cx={tx} cy="143" rx="10" ry="12" fill="#2d6a2d" />
-        </g>
-      ))}
+      {/* GROUND SHADOW at bottom */}
+      <rect x="0" y="290" width="480" height="10" fill="rgba(0,0,0,0.15)" />
 
     </svg>
   );
@@ -382,7 +387,9 @@ function App() {
   const saveData = async (extra = {}) => {
     if (!phone) return;
     try {
-      await setDoc(doc(db, "kisans", phone), { phone, pin, naam: kisanNaam, shehar, fasal, beejDate, messages, ...extra }, { merge: true });
+      await setDoc(doc(db, "kisans", phone), {
+        phone, pin, naam: kisanNaam, shehar, fasal, beejDate, messages, ...extra
+      }, { merge: true });
     } catch (e) { console.log(e); }
   };
 
@@ -437,16 +444,8 @@ function App() {
   const isRain = weather && weather.id >= 200 && weather.id < 600;
   const windSpeed = weather?.wind || 0;
 
-  const getBg = () => {
-    if (isRain) return "linear-gradient(180deg, #2c3e6b 0%, #4a6fa5 35%, #7aa3cc 65%, #3a5c3a 100%)";
-    if (isNight) return "linear-gradient(180deg, #080818 0%, #1a1a2e 35%, #16213e 65%, #0d1f0d 100%)";
-    return "linear-gradient(180deg, #6ec6f0 0%, #a8d8f0 35%, #d4edaa 70%, #3a7a3a 100%)";
-  };
-
-  // FIXED VOICE - proper start/stop
   const handleVoice = () => {
     if (recording) {
-      // Stop recording
       if (recognitionRef.current) {
         recognitionRef.current.stop();
         recognitionRef.current = null;
@@ -454,38 +453,23 @@ function App() {
       setRecording(false);
       return;
     }
-
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
       alert("Chrome browser use karo mic ke liye!");
       return;
     }
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SR();
     recognition.lang = "hi-IN";
     recognition.continuous = false;
     recognition.interimResults = false;
-
     recognition.onstart = () => setRecording(true);
-
     recognition.onresult = (e) => {
-      const text = e.results[0][0].transcript;
-      setInput(text);
+      setInput(e.results[0][0].transcript);
       setRecording(false);
       recognitionRef.current = null;
     };
-
-    recognition.onerror = (e) => {
-      console.log("Voice error:", e.error);
-      setRecording(false);
-      recognitionRef.current = null;
-    };
-
-    recognition.onend = () => {
-      setRecording(false);
-      recognitionRef.current = null;
-    };
-
+    recognition.onerror = () => { setRecording(false); recognitionRef.current = null; };
+    recognition.onend = () => { setRecording(false); recognitionRef.current = null; };
     recognitionRef.current = recognition;
     recognition.start();
   };
@@ -496,13 +480,10 @@ function App() {
     setMessages(newMsgs);
     setInput("");
     setLoading(true);
-        try {
+    try {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` 
-        },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           max_tokens: 150,
@@ -530,52 +511,22 @@ Rules:
           ]
         })
       });
-
-      // === NEW SAFETY CHECKS START ===
-      if (res.status === 429) {
-        throw new Error("RATE_LIMIT");
-      }
-      if (!res.ok) {
-        throw new Error("SERVER_ERROR");
-      }
-
+      if (res.status === 429) throw new Error("RATE_LIMIT");
+      if (!res.ok) throw new Error("SERVER_ERROR");
       const data = await res.json();
       const jawab = data?.choices?.[0]?.message?.content;
-      
-      if (!jawab) {
-        throw new Error("INVALID_RESPONSE");
-      }
-
+      if (!jawab) throw new Error("INVALID_RESPONSE");
       const updatedMsgs = [...newMsgs, { role: "assistant", content: jawab }];
       setMessages(updatedMsgs);
-
-      try {
-        await saveData({ messages: updatedMsgs });
-      } catch (dbError) {
-        console.error("Database saving failed:", dbError);
-      }
-      // === NEW SAFETY CHECKS END ===
-
-    } catch (error) {
-      console.error("Detailed Error:", error);
-
-      let errorMessage = "Kuch dikkat aayi — dobara try karo!";
-      
-      if (error.message === "RATE_LIMIT") {
-        errorMessage = "Server busy hai (Too Many Requests). Ek minute baad try karein!";
-      } else if (error.message === "SERVER_ERROR" || error.message === "INVALID_RESPONSE") {
-        errorMessage = "API Response mein dikkat hai. Kripya thoda ruk kar try karein.";
-      } else if (!navigator.onLine) {
-        errorMessage = "Apna internet connection check karein!";
-      }
-
-      setMessages([...newMsgs, { role: "assistant", content: errorMessage }]);
+      try { await saveData({ messages: updatedMsgs }); } catch (e) { console.log(e); }
+    } catch (err) {
+      let msg = "Kuch dikkat aayi — dobara try karo!";
+      if (err.message === "RATE_LIMIT") msg = "Server busy hai — 1 minute baad try karein!";
+      else if (!navigator.onLine) msg = "Internet check karein!";
+      setMessages([...newMsgs, { role: "assistant", content: msg }]);
     }
-
     setLoading(false);
   };
-
-
 
   // ===== SPLASH =====
   if (screen === "splash") return (
@@ -669,9 +620,7 @@ Rules:
           if (kisanNaam && shehar) {
             await saveData({ naam: kisanNaam, shehar });
             setScreen("fasal");
-          } else {
-            setError("Naam aur shehar dono bharo!");
-          }
+          } else setError("Naam aur shehar dono bharo!");
         }}>✅ Aage Badho</motion.button>
     </motion.div>
   );
@@ -706,60 +655,20 @@ Rules:
 
   // ===== MAIN APP =====
   return (
-    <div style={{ ...styles.app, background: getBg(), position: "relative", overflow: "hidden" }}>
+    <div style={{ ...styles.app, position: "relative", overflow: "hidden", background: "#87CEEB" }}>
 
-      {/* Rain */}
-      {isRain && (
-        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-          {[...Array(35)].map((_, i) => (
-            <motion.div key={i}
-              style={{ position: "absolute", top: -20, left: `${(i * 2.9) % 100}%`, width: 1.5, height: 10 + (i % 5) * 3, background: "rgba(160,200,255,0.65)", borderRadius: 2 }}
-              animate={{ y: ["0vh", "110vh"] }}
-              transition={{ duration: 0.45 + (i % 6) * 0.06, repeat: Infinity, delay: (i % 18) * 0.08, ease: "linear" }} />
-          ))}
-        </div>
-      )}
-
-      {/* Stars */}
-      {isNight && (
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "55%", pointerEvents: "none", zIndex: 0 }}>
-          {[...Array(30)].map((_, i) => (
-            <motion.div key={i}
-              style={{ position: "absolute", top: `${(i * 7) % 85}%`, left: `${(i * 13) % 100}%`, width: 1.5 + (i % 2), height: 1.5 + (i % 2), background: "white", borderRadius: "50%", opacity: 0.7 }}
-              animate={{ opacity: [0.2, 0.9, 0.2] }}
-              transition={{ duration: 1.5 + (i % 4), repeat: Infinity, delay: (i % 8) * 0.25 }} />
-          ))}
-          <motion.div style={{ position: "absolute", top: 8, right: 12, fontSize: 22, opacity: 0.75 }}
-            animate={{ y: [0, -4, 0] }} transition={{ duration: 5, repeat: Infinity }}>🌙</motion.div>
-        </div>
-      )}
-
-      {/* Sun */}
-      {!isNight && !isRain && (
-        <motion.div style={{ position: "absolute", top: 8, right: 8, fontSize: 26, opacity: 0.55, zIndex: 0 }}
-          animate={{ rotate: [0, 360] }} transition={{ duration: 30, repeat: Infinity, ease: "linear" }}>☀️</motion.div>
-      )}
-
-      {/* Fasal Growing Background */}
+      {/* FARM BACKGROUND SVG */}
       <FasalBackground din={din} windSpeed={windSpeed} isRain={isRain} isNight={isNight} fasal={fasal} />
 
       {/* Top Bar */}
       <motion.div style={{ ...styles.topBar, position: "relative", zIndex: 2 }}
         initial={{ y: -60 }} animate={{ y: 0 }} transition={{ type: "spring", stiffness: 120 }}>
-
-        {/* LEFT — Dukaan ka naam — click pe address */}
-        <motion.div whileTap={{ scale: 0.95 }}
-          onClick={() => setShowAddress(!showAddress)}
-          style={{ cursor: "pointer" }}>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>🏪 Tap for address</div>
+        <motion.div whileTap={{ scale: 0.95 }} onClick={() => setShowAddress(!showAddress)} style={{ cursor: "pointer" }}>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.8)" }}>🏪 Tap for address</div>
           <div style={{ fontSize: 13, fontWeight: "bold", color: "white" }}>Hanuman Khad Bhandar</div>
         </motion.div>
-
-        {/* RIGHT — Kisan naam — click pe profile/logout */}
-        <motion.div whileTap={{ scale: 0.95 }}
-          onClick={() => setShowProfile(!showProfile)}
-          style={{ cursor: "pointer", textAlign: "right" }}>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>👤 Tap for profile</div>
+        <motion.div whileTap={{ scale: 0.95 }} onClick={() => setShowProfile(!showProfile)} style={{ cursor: "pointer", textAlign: "right" }}>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.8)" }}>👤 Tap for profile</div>
           <div style={{ fontSize: 13, fontWeight: "bold", color: "white" }}>{kisanNaam} ji</div>
         </motion.div>
       </motion.div>
@@ -768,7 +677,7 @@ Rules:
       <AnimatePresence>
         {showAddress && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            style={{ ...styles.popupCard, zIndex: 3 }}>
+            style={{ ...styles.popupCard, zIndex: 10 }}>
             <div style={{ fontWeight: "bold", color: "#8B6914", marginBottom: 4 }}>🏪 Hanuman Khad Bhandar</div>
             <div style={{ fontSize: 13, color: "#5a3e10" }}>📍 Vill. Hatt (Safidon)</div>
             <div style={{ fontSize: 13, color: "#5a3e10" }}>Jind, Haryana</div>
@@ -783,18 +692,16 @@ Rules:
       <AnimatePresence>
         {showProfile && (
           <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-            style={{ ...styles.popupCard, right: 8, left: "auto", zIndex: 3 }}>
+            style={{ ...styles.popupCard, right: 8, left: "auto", zIndex: 10 }}>
             <div style={{ fontWeight: "bold", color: "#8B6914", marginBottom: 4 }}>👤 {kisanNaam} ji</div>
             <div style={{ fontSize: 12, color: "#5a3e10" }}>📱 {phone}</div>
             <div style={{ fontSize: 12, color: "#5a3e10" }}>📍 {shehar}</div>
             <div style={{ fontSize: 12, color: "#5a3e10" }}>🌾 {fasal}</div>
             <div style={{ display: "flex", gap: 8, marginTop: 8, flexWrap: "wrap" }}>
-              <button onClick={() => { setShowProfile(false); setScreen("fasal"); }}
-                style={styles.smallBtn}>🔄 Nayi Fasal</button>
+              <button onClick={() => { setShowProfile(false); setScreen("fasal"); }} style={styles.smallBtn}>🔄 Nayi Fasal</button>
               <button onClick={() => {
-                setShowProfile(false);
-                setScreen("phone"); setPhone(""); setPin(""); setKisanNaam("");
-                setShehar(""); setFasal(""); setBeejDate(""); setMessages([]);
+                setShowProfile(false); setScreen("phone"); setPhone(""); setPin("");
+                setKisanNaam(""); setShehar(""); setFasal(""); setBeejDate(""); setMessages([]);
               }} style={{ ...styles.smallBtn, background: "#c0392b" }}>🚪 Logout</button>
             </div>
             <button onClick={() => setShowProfile(false)}
@@ -839,8 +746,7 @@ Rules:
       <div style={{ ...styles.chatBox, position: "relative", zIndex: 1 }}>
         <AnimatePresence>
           {messages.map((msg, i) => (
-            <motion.div key={i}
-              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}
+            <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}
               style={msg.role === "user" ? styles.userMsg : styles.botMsg}>
               {msg.content}
             </motion.div>
@@ -874,9 +780,7 @@ Rules:
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !loading && sendMessage(input)}
           placeholder={recording ? "Bol rahe ho... 🎤" : "Sawaal likhein..."} />
-        <motion.button
-          whileTap={{ scale: 0.8 }}
-          onClick={handleVoice}
+        <motion.button whileTap={{ scale: 0.8 }} onClick={handleVoice}
           style={{ ...styles.iconBtn, color: recording ? "red" : "inherit" }}>
           {recording ? "🔴" : "🎤"}
         </motion.button>
@@ -887,9 +791,9 @@ Rules:
       {/* Footer */}
       <div style={{ ...styles.footer, position: "relative", zIndex: 1 }}>
         <div>🌾 Hanuman Khad Bhandar, Vill. Hatt (Safidon), Jind 🌾</div>
-<div style={{fontSize: 10, color: "#a07030", marginTop: 3}}>
-  ⚠️ Ye AI hai — galat advice ho sakti hai, expert se zaroor milein
-</div>
+        <div style={{ fontSize: 10, color: "#a07030", marginTop: 3 }}>
+          ⚠️ Ye AI hai — galat advice ho sakti hai, expert se zaroor milein
+        </div>
       </div>
     </div>
   );
@@ -918,7 +822,7 @@ const styles = {
   footer: { textAlign: "center", padding: "6px 10px", fontSize: 11, color: "#8B6914", borderTop: "1px solid #c8a96e", background: "rgba(255,248,225,0.97)" },
   suggestions: { position: "absolute", top: "100%", left: 0, right: 0, background: "#fff8e1", border: "1px solid #c8a96e", borderRadius: 10, zIndex: 100, maxHeight: 140, overflowY: "auto", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" },
   suggestionItem: { padding: "9px 14px", fontSize: 13, color: "#5a3e10", cursor: "pointer", borderBottom: "1px solid #f0e8d0" },
-  popupCard: { position: "absolute", top: 58, left: 8, background: "rgba(255,248,225,0.98)", border: "1px solid #c8a96e", borderRadius: 12, padding: "12px 14px", boxShadow: "0 4px 16px rgba(0,0,0,0.15)", minWidth: 180, zIndex: 3 },
+  popupCard: { position: "absolute", top: 58, left: 8, background: "rgba(255,248,225,0.98)", border: "1px solid #c8a96e", borderRadius: 12, padding: "12px 14px", boxShadow: "0 4px 16px rgba(0,0,0,0.15)", minWidth: 180 },
   smallBtn: { background: "#8B6914", color: "white", border: "none", borderRadius: 8, padding: "5px 10px", fontSize: 12, cursor: "pointer" },
 };
 
