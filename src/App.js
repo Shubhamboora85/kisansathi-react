@@ -12,7 +12,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===== REALISTIC FARM BACKGROUND WITH FIXED SCROLL & CLEAN ARRAYS =====
+// ===== REALISTIC FARM BACKGROUND WITH FIXED SCROLL & NO ARRAYS FIX =====
 function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const hour = new Date().getHours();
 
@@ -53,18 +53,10 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const sunX = hour < 12 ? 60 + hour * 18 : 400 - (hour - 12) * 18;
   const sunY = hour < 6 ? 160 : hour < 12 ? 160 - (hour - 6) * 15 : hour < 18 ? 70 + (hour - 12) * 12 : 160;
 
-  // CLEANED: Ab yahan koi bhi blank spaces ya dangling commas nahi hain
-  const starsArray = [, [90, 32], [140, 12], [195, 38], [248, 18], [295, 32],
-, [415, 28], [65, 52], [175, 58], [328, 48], [455, 18]
-  ];
-  const treesArray =;
-  const waterArray =;
-  const rowsLinesArray =;
-
   return (
     <svg viewBox="0 0 480 300"
       style={{ 
-        position: "fixed", 
+        position: "fixed", // SCROLL ZOOM FIX: Background ko screen par fix kiya
         bottom: 0, 
         left: 0, 
         right: 0, 
@@ -125,9 +117,9 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
         </g>
       )}
 
-      {/* STARS */}
-      {isNight && starsArray.map(([x, y], i) => (
-        <circle key={`star-${i}`} cx={x} cy={y} r={1 + (i % 3) * 0.5} fill="white" opacity={0.6} />
+      {/* STARS WITHOUT ARRAY COMPILATION BUG */}
+      {isNight && [30, 80, 140, 200, 260, 320, 380, 440].map((sx, i) => (
+        <circle key={`star-${i}`} cx={sx + (i * 5)} cy={30 + (i % 3 ? 15 : 0)} r="1.5" fill="white" opacity="0.6" />
       ))}
 
       {/* CLOUDS */}
@@ -149,8 +141,8 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
       {/* HORIZON */}
       <rect x="0" y="185" width="480" height="15" fill="#1e441e" opacity="0.85" />
 
-      {/* REALISTIC SHADED TREES */}
-      {treesArray.map((tx, i) => (
+      {/* REALISTIC SHADED TREES WITHOUT ARRAY BUG */}
+      {[45, 120, 210, 300, 380, 440].map((tx, i) => (
         <g key={`tree-${i}`} opacity={0.7 + (i % 2) * 0.15}>
           <path d={`M${tx-2},186 L${tx+2},186 L${tx+1},158 L${tx-1},158 Z`} fill="url(#treeTrunk)" />
           <ellipse cx={tx} cy="154" rx={14} ry={16} fill="#143d14" />
@@ -168,14 +160,14 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
       {(fasal === "🌾 Chawal (Rice)" || !fasal) && din > 8 && (
         <g>
           <rect x="0" y="226" width="480" height="15" fill="url(#waterG)" />
-          {waterArray.map((wx, i) => (
+          {[40, 140, 240, 340, 440].map((wx, i) => (
             <ellipse key={`water-${i}`} cx={wx} cy="232" rx="35" ry="2.5" fill="white" opacity="0.18" />
           ))}
         </g>
       )}
 
       {/* FIELD ROW LINES */}
-      {rowsLinesArray.map(row => (
+      {[0, 1, 2, 3].map(row => (
         <line key={`line-${row}`} x1="0" y1={233 + row * 6} x2="480" y2={233 + row * 6}
           stroke="#3d663d" strokeWidth="0.5" opacity="0.45" />
       ))}
