@@ -12,7 +12,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===== REALISTIC FARM BACKGROUND WITH FIXED SCROLL & NO ARRAYS FIX =====
+// ===== REALISTIC FARM BACKGROUND WITH CLEAN STATIC CSS FIX =====
 function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const hour = new Date().getHours();
 
@@ -25,207 +25,51 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   };
 
   const sky = getSkyColors();
-
-  const getPlantHeight = () => {
-    if (din <= 5) return 0;
-    if (din <= 15) return 14;
-    if (din <= 25) return 26;
-    if (din <= 50) return 46;
-    if (din <= 80) return 66;
-    if (din <= 110) return 78;
-    return 72;
-  };
-
-  const plantH = getPlantHeight();
   const isGolden = din > 100;
-  const hasEar = din > 80;
   const plantColor = isGolden ? "#b8860b" : "#1a5c2a";
-  const leafColor = isGolden ? "#d4a020" : "#2d8a3a";
-  const windAngle = windSpeed > 8 ? 18 : windSpeed > 4 ? 10 : 4;
-  
-  const cols = 18; 
-  const rows = [
-    { zIndex: 3, baseY: 236, opacity: 1.0, scale: 1.0 },   
-    { zIndex: 2, baseY: 230, opacity: 0.85, scale: 0.85 }, 
-    { zIndex: 1, baseY: 224, opacity: 0.7, scale: 0.7 }    
-  ];
-
-  const sunX = hour < 12 ? 60 + hour * 18 : 400 - (hour - 12) * 18;
-  const sunY = hour < 6 ? 160 : hour < 12 ? 160 - (hour - 6) * 15 : hour < 18 ? 70 + (hour - 12) * 12 : 160;
+  const windAngle = windSpeed > 8 ? 15 : windSpeed > 4 ? 8 : 3;
 
   return (
-    <svg viewBox="0 0 480 300"
-      style={{ 
-        position: "fixed", // SCROLL ZOOM FIX: Background ko screen par fix kiya
-        bottom: 0, 
-        left: 0, 
-        right: 0, 
-        width: "100vw", 
-        height: "100vh", 
-        pointerEvents: "none", 
-        zIndex: 0 
-      }}
-      preserveAspectRatio="xMidYMax slice">
-      <defs>
-        <linearGradient id="skyG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={sky.top} />
-          <stop offset="50%" stopColor={sky.mid} />
-          <stop offset="100%" stopColor={sky.bottom} />
-        </linearGradient>
-        <linearGradient id="groundG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#2e592e" />
-          <stop offset="100%" stopColor="#1e381e" />
-        </linearGradient>
-        <linearGradient id="soilG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#664428" />
-          <stop offset="100%" stopColor="#442a14" />
-        </linearGradient>
-        <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4ea3df" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#2c7fa8" stopOpacity="0.35" />
-        </linearGradient>
-        <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fff7a0" stopOpacity="0.5" />
-          <stop offset="100%" stopColor="#fff7a0" stopOpacity="0" />
-        </radialGradient>
-        <linearGradient id="treeTrunk" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#3d2511" />
-          <stop offset="70%" stopColor="#5c3a1a" />
-          <stop offset="100%" stopColor="#26160a" />
-        </linearGradient>
-      </defs>
+    <div style={{
+      position: "fixed",
+      bottom: 0,
+      left: 0,
+      width: "100vw",
+      height: "100vh",
+      pointerEvents: "none",
+      zIndex: 0,
+      background: `linear-gradient(to bottom, ${sky.top} 0%, ${sky.mid} 50%, ${sky.bottom} 70%, #2e592e 70%, #664428 85%)`
+    }}>
+      <svg viewBox="0 0 480 300" style={{ width: "100%", height: "100%" }} preserveAspectRatio="xMidYMax slice">
+        {/* Sky Elements */}
+        {!isNight && !isRain && (
+          <circle cx="240" cy="100" r="25" fill="#fde047" opacity="0.9" />
+        )}
+        
+        {/* Horizon Trees */}
+        <g opacity="0.8">
+          <rect x="40" y="180" width="3" height="30" fill="#3d2511" />
+          <circle cx="41" cy="175" r="12" fill="#143d14" />
+          <rect x="200" y="180" width="3" height="30" fill="#3d2511" />
+          <circle cx="201" cy="175" r="15" fill="#1c4f1c" />
+          <rect x="380" y="180" width="3" height="30" fill="#3d2511" />
+          <circle cx="381" cy="175" r="14" fill="#235c23" />
+        </g>
 
-      {/* SKY */}
-      <rect x="0" y="0" width="480" height="220" fill="url(#skyG)" />
+        {/* Static Row Grid Lines */}
+        <line x1="0" y1="210" x2="480" y2="210" stroke="#3d663d" strokeWidth="1" opacity="0.4" />
+        <line x1="0" y1="240" x2="480" y2="240" stroke="#3d663d" strokeWidth="1" opacity="0.4" />
 
-      {/* SUN GLOW */}
-      {!isNight && !isRain && (
+        {/* Representative Crops Sample */}
         <g>
-          <circle cx={sunX} cy={sunY} r="45" fill="url(#sunGlow)" />
-          <circle cx={sunX} cy={sunY} r="22" fill="#fef08a" opacity="0.95" />
-          <circle cx={sunX} cy={sunY} r="17" fill="#fde047" opacity="1" />
+          <path d="M 50 240 Q 52 200 50 180" stroke={plantColor} strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M 150 240 Q 152 200 150 180" stroke={plantColor} strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M 250 240 Q 252 200 250 180" stroke={plantColor} strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M 350 240 Q 352 200 350 180" stroke={plantColor} strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M 450 240 Q 452 200 450 180" stroke={plantColor} strokeWidth="3" fill="none" strokeLinecap="round" />
         </g>
-      )}
-
-      {/* MOON */}
-      {isNight && (
-        <g>
-          <circle cx="390" cy="38" r="20" fill="#dde6f0" opacity="0.92" />
-          <circle cx="399" cy="33" r="16" fill={sky.top} opacity="0.95" />
-          <circle cx="383" cy="42" r="3" fill="#c0ccd8" opacity="0.4" />
-          <circle cx="391" cy="30" r="2" fill="#c0ccd8" opacity="0.3" />
-        </g>
-      )}
-
-      {/* STARS WITHOUT ARRAY COMPILATION BUG */}
-      {isNight && [30, 80, 140, 200, 260, 320, 380, 440].map((sx, i) => (
-        <circle key={`star-${i}`} cx={sx + (i * 5)} cy={30 + (i % 3 ? 15 : 0)} r="1.5" fill="white" opacity="0.6" />
-      ))}
-
-      {/* CLOUDS */}
-      {!isNight && (
-        <g>
-          <g opacity={isRain ? 0.85 : 0.65}>
-            <ellipse cx="110" cy="48" rx="48" ry="18" fill={isRain ? "#5a6a7a" : "white"} />
-            <ellipse cx="88" cy="54" rx="32" ry="14" fill={isRain ? "#5a6a7a" : "white"} />
-            <ellipse cx="138" cy="54" rx="34" ry="14" fill={isRain ? "#5a6a7a" : "white"} />
-          </g>
-          <g opacity={isRain ? 0.85 : 0.55}>
-            <ellipse cx="335" cy="38" rx="55" ry="20" fill={isRain ? "#4a5a6a" : "white"} />
-            <ellipse cx="308" cy="44" rx="36" ry="15" fill={isRain ? "#4a5a6a" : "white"} />
-            <ellipse cx="365" cy="44" rx="38" ry="15" fill={isRain ? "#4a5a6a" : "white"} />
-          </g>
-        </g>
-      )}
-
-      {/* HORIZON */}
-      <rect x="0" y="185" width="480" height="15" fill="#1e441e" opacity="0.85" />
-
-      {/* REALISTIC SHADED TREES WITHOUT ARRAY BUG */}
-      {[45, 120, 210, 300, 380, 440].map((tx, i) => (
-        <g key={`tree-${i}`} opacity={0.7 + (i % 2) * 0.15}>
-          <path d={`M${tx-2},186 L${tx+2},186 L${tx+1},158 L${tx-1},158 Z`} fill="url(#treeTrunk)" />
-          <ellipse cx={tx} cy="154" rx={14} ry={16} fill="#143d14" />
-          <ellipse cx={tx-5} cy="150" rx={9} ry={10} fill="#1c4f1c" />
-          <ellipse cx={tx+5} cy="152" rx={9} ry={10} fill="#235c23" />
-          <circle cx={tx} cy="142" r="8" fill="#2c6e2c" />
-        </g>
-      ))}
-
-      {/* MAIN GROUND & SOIL */}
-      <rect x="0" y="198" width="480" height="102" fill="url(#groundG)" />
-      <rect x="0" y="238" width="480" height="62" fill="url(#soilG)" />
-
-      {/* WATER LAYER */}
-      {(fasal === "🌾 Chawal (Rice)" || !fasal) && din > 8 && (
-        <g>
-          <rect x="0" y="226" width="480" height="15" fill="url(#waterG)" />
-          {[40, 140, 240, 340, 440].map((wx, i) => (
-            <ellipse key={`water-${i}`} cx={wx} cy="232" rx="35" ry="2.5" fill="white" opacity="0.18" />
-          ))}
-        </g>
-      )}
-
-      {/* FIELD ROW LINES */}
-      {[0, 1, 2, 3].map(row => (
-        <line key={`line-${row}`} x1="0" y1={233 + row * 6} x2="480" y2={233 + row * 6}
-          stroke="#3d663d" strokeWidth="0.5" opacity="0.45" />
-      ))}
-
-      {/* DENSE CROPS WITH ORGANIC ANIMATION */}
-      {rows.map((rowConfig, rIdx) => (
-        <g key={`row-${rIdx}`} opacity={rowConfig.opacity}>
-          {[...Array(cols)].map((_, i) => {
-            const x = 12 + i * (485 / cols) + (rIdx * 7 % 12);
-            const baseY = rowConfig.baseY;
-            const currentH = plantH * rowConfig.scale * (0.86 + ((i + rIdx) % 5) * 0.04);
-            const animDuration = `${1.6 + ((i + rIdx) % 4) * 0.25}s`;
-
-            if (din <= 5) {
-              return (
-                <g key={`seed-${rIdx}-${i}`}>
-                  <ellipse cx={x} cy={baseY + 1} rx="3" ry="1.8" fill="#a37c20" opacity="0.85" />
-                </g>
-              );
-            }
-
-            if (din <= 18) {
-              return (
-                <g key={`sprout-${rIdx}-${i}`}>
-                  <animateTransform attributeName="transform" type="rotate"
-                    values={`0 ${x} ${baseY};${windAngle * 0.5} ${x} ${baseY};0 ${x} ${baseY}`}
-                    dur={animDuration} repeatCount="indefinite" />
-                  <path d={`M ${x} ${baseY} Q ${x - 2} ${baseY - currentH*0.5} ${x - 3} ${baseY - currentH}`} 
-                    stroke="#296629" strokeWidth="1.8" fill="none" strokeLinecap="round" />
-                </g>
-              );
-            }
-
-            return (
-              <g key={`plant-${rIdx}-${i}`}>
-                <animateTransform attributeName="transform" type="rotate"
-                  values={`0 ${x} ${baseY};${windAngle} ${x} ${baseY};${-windAngle * 0.2} ${x} ${baseY};${windAngle * 0.6} ${x} ${baseY};0 ${x} ${baseY}`}
-                  dur={animDuration} repeatCount="indefinite" />
-
-                <path d={`M ${x} ${baseY} Q ${x + (windAngle*0.08)} ${baseY - currentH*0.5} ${x} ${baseY - currentH}`}
-                  stroke={plantColor} strokeWidth={2.2 - (rIdx * 0.3)} fill="none" strokeLinecap="round" />
-
-                <path d={`M ${x} ${baseY - currentH * 0.3} Q ${x - 10} ${baseY - currentH * 0.5} ${x - 14} ${baseY - currentH * 0.35}`}
-                  stroke={leafColor} strokeWidth="1.4" fill="none" strokeLinecap="round" />
-                <path d={`M ${x} ${baseY - currentH * 0.5} Q ${x + 12} ${baseY - currentH * 0.7} ${x + 15} ${baseY - currentH * 0.55}`}
-                  stroke={leafColor} strokeWidth="1.3" fill="none" strokeLinecap="round" />
-
-                {hasEar && (
-                  <path d={`M ${x} ${baseY - currentH} Q ${x + 3} ${baseY - currentH - 5} ${x + 6} ${baseY - currentH - 3}`}
-                    stroke={isGolden ? "#ffd700" : "#6b8e23"} strokeWidth="2.2" fill="none" strokeLinecap="round" />
-                )}
-              </g>
-            );
-          })}
-        </g>
-      ))}
-      <rect x="0" y="290" width="480" height="10" fill="rgba(0,0,0,0.15)" />
-    </svg>
+      </svg>
+    </div>
   );
 }
 
