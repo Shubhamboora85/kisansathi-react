@@ -12,7 +12,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===== REALISTIC FARM BACKGROUND WITH FIXED SCROLL FIX =====
+// ===== REALISTIC FARM BACKGROUND WITH FIXED SCROLL & SYNTAX FIX =====
 function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const hour = new Date().getHours();
 
@@ -43,22 +43,26 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const leafColor = isGolden ? "#d4a020" : "#2d8a3a";
   const windAngle = windSpeed > 8 ? 18 : windSpeed > 4 ? 10 : 4;
   
-  // Total 18 columns aur 3 layered rows khet ko ghana (dense) banane ke liye
   const cols = 18; 
   const rows = [
-    { zIndex: 3, baseY: 236, opacity: 1.0, scale: 1.0 },   // Saamne wali row
-    { zIndex: 2, baseY: 230, opacity: 0.85, scale: 0.85 }, // Beech wali row
-    { zIndex: 1, baseY: 224, opacity: 0.7, scale: 0.7 }    // Piche wali row
+    { zIndex: 3, baseY: 236, opacity: 1.0, scale: 1.0 },   
+    { zIndex: 2, baseY: 230, opacity: 0.85, scale: 0.85 }, 
+    { zIndex: 1, baseY: 224, opacity: 0.7, scale: 0.7 }    
   ];
 
-  // Sun position
   const sunX = hour < 12 ? 60 + hour * 18 : 400 - (hour - 12) * 18;
   const sunY = hour < 6 ? 160 : hour < 12 ? 160 - (hour - 6) * 15 : hour < 18 ? 70 + (hour - 12) * 12 : 160;
+
+  // Static arrays for stars, trees, water, and lines to avoid adjacent JSX errors
+  const starsArray = [[40,18],[90,32],[140,12],[195,38],[248,18],[295,32],[345,14],[415,28],[65,52],[175,58],[328,48],[455,18]];
+  const treesArray =;
+  const waterArray =;
+  const rowsLinesArray =;
 
   return (
     <svg viewBox="0 0 480 300"
       style={{ 
-        position: "fixed", // SCROLL FIX: Background ko ek jagah lock kiya taaki chat scrolling se zoom na ho
+        position: "fixed", 
         bottom: 0, 
         left: 0, 
         right: 0, 
@@ -120,11 +124,8 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
       )}
 
       {/* STARS */}
-      {isNight && [
-        [40,18],[90,32],[140,12],[195,38],[248,18],[295,32],
-        [345,14],[415,28],[65,52],[175,58],[328,48],[455,18]
-      ].map(([x, y], i) => (
-        <circle key={i} cx={x} cy={y} r={1 + (i % 3) * 0.5} fill="white" opacity={0.6} />
+      {isNight && starsArray.map(([x, y], i) => (
+        <circle key={`star-${i}`} cx={x} cy={y} r={1 + (i % 3) * 0.5} fill="white" opacity={0.6} />
       ))}
 
       {/* CLOUDS */}
@@ -146,9 +147,9 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
       {/* HORIZON */}
       <rect x="0" y="185" width="480" height="15" fill="#1e441e" opacity="0.85" />
 
-      {/* REALISTIC SHADED TREES (Piche ke ped real lagne ke liye multi-layer shapes) */}
-      {[55, 140, 240, 340, 425].map((tx, i) => (
-        <g key={i} opacity={0.7 + (i % 2) * 0.15}>
+      {/* REALISTIC SHADED TREES */}
+      {treesArray.map((tx, i) => (
+        <g key={`tree-${i}`} opacity={0.7 + (i % 2) * 0.15}>
           <path d={`M${tx-2},186 L${tx+2},186 L${tx+1},158 L${tx-1},158 Z`} fill="url(#treeTrunk)" />
           <ellipse cx={tx} cy="154" rx={14} ry={16} fill="#143d14" />
           <ellipse cx={tx-5} cy="150" rx={9} ry={10} fill="#1c4f1c" />
@@ -165,19 +166,19 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
       {(fasal === "🌾 Chawal (Rice)" || !fasal) && din > 8 && (
         <g>
           <rect x="0" y="226" width="480" height="15" fill="url(#waterG)" />
-          {[60, 160, 260, 360].map((wx, i) => (
-            <ellipse key={i} cx={wx} cy="232" rx="35" ry="2.5" fill="white" opacity="0.18" />
+          {waterArray.map((wx, i) => (
+            <ellipse key={`water-${i}`} cx={wx} cy="232" rx="35" ry="2.5" fill="white" opacity="0.18" />
           ))}
         </g>
       )}
 
       {/* FIELD ROW LINES */}
-      {[0, 1, 2, 3].map(row => (
-        <line key={row} x1="0" y1={233 + row * 6} x2="480" y2={233 + row * 6}
+      {rowsLinesArray.map(row => (
+        <line key={`line-${row}`} x1="0" y1={233 + row * 6} x2="480" y2={233 + row * 6}
           stroke="#3d663d" strokeWidth="0.5" opacity="0.45" />
       ))}
 
-      {/* DENSE CROPS WITH ORGANIC SWAYING ANIMATION */}
+      {/* DENSE CROPS WITH ORGANIC ANIMATION */}
       {rows.map((rowConfig, rIdx) => (
         <g key={`row-${rIdx}`} opacity={rowConfig.opacity}>
           {[...Array(cols)].map((_, i) => {
@@ -212,17 +213,14 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
                   values={`0 ${x} ${baseY};${windAngle} ${x} ${baseY};${-windAngle * 0.2} ${x} ${baseY};${windAngle * 0.6} ${x} ${baseY};0 ${x} ${baseY}`}
                   dur={animDuration} repeatCount="indefinite" />
 
-                {/* Curved stem instead of straight line */}
                 <path d={`M ${x} ${baseY} Q ${x + (windAngle*0.08)} ${baseY - currentH*0.5} ${x} ${baseY - currentH}`}
                   stroke={plantColor} strokeWidth={2.2 - (rIdx * 0.3)} fill="none" strokeLinecap="round" />
 
-                {/* Organic curved leaves */}
                 <path d={`M ${x} ${baseY - currentH * 0.3} Q ${x - 10} ${baseY - currentH * 0.5} ${x - 14} ${baseY - currentH * 0.35}`}
                   stroke={leafColor} strokeWidth="1.4" fill="none" strokeLinecap="round" />
                 <path d={`M ${x} ${baseY - currentH * 0.5} Q ${x + 12} ${baseY - currentH * 0.7} ${x + 15} ${baseY - currentH * 0.55}`}
                   stroke={leafColor} strokeWidth="1.3" fill="none" strokeLinecap="round" />
 
-                {/* Crop Ear (Baali) */}
                 {hasEar && (
                   <path d={`M ${x} ${baseY - currentH} Q ${x + 3} ${baseY - currentH - 5} ${x + 6} ${baseY - currentH - 3}`}
                     stroke={isGolden ? "#ffd700" : "#6b8e23"} strokeWidth="2.2" fill="none" strokeLinecap="round" />
@@ -232,9 +230,11 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
           })}
         </g>
       ))}
+      <rect x="0" y="290" width="480" height="10" fill="rgba(0,0,0,0.15)" />
     </svg>
   );
 }
+
 
 
       {/* RAIN DROPS */}
