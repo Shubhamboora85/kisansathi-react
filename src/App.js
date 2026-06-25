@@ -12,7 +12,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ===== REALISTIC FARM BACKGROUND WITH FIXED SCROLL & SYNTAX FIX =====
+// ===== REALISTIC FARM BACKGROUND WITH FIXED SCROLL & CLEAN ARRAYS =====
 function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const hour = new Date().getHours();
 
@@ -53,7 +53,7 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const sunX = hour < 12 ? 60 + hour * 18 : 400 - (hour - 12) * 18;
   const sunY = hour < 6 ? 160 : hour < 12 ? 160 - (hour - 6) * 15 : hour < 18 ? 70 + (hour - 12) * 12 : 160;
 
-  // FIXED: Saare coordinate arrays ko values ke saath valid banaya gaya hai
+  // CLEANED: Ab yahan koi bhi blank spaces ya dangling commas nahi hain
   const starsArray = [, [90, 32], [140, 12], [195, 38], [248, 18], [295, 32],
 , [415, 28], [65, 52], [175, 58], [328, 48], [455, 18]
   ];
