@@ -295,6 +295,40 @@ function App() {
   const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
+  // Auto login — localStorage se phone aur pin yaad rakho
+useEffect(() => {
+  const savedPhone = localStorage.getItem("kisan_phone");
+  const savedPin = localStorage.getItem("kisan_pin");
+  
+  if (savedPhone && savedPin) {
+    setPhone(savedPhone);
+    setPin(savedPin);
+    setDbLoading(true);
+    
+    getDoc(doc(db, "kisans", savedPhone)).then(docSnap => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.pin === savedPin) {
+          setKisanNaam(data.naam || "");
+          setShehar(data.shehar || "");
+          setFasal(data.fasal || "");
+          setBeejDate(data.beejDate || "");
+          setMessages(data.messages?.length > 0 ? data.messages : [{
+            role: "assistant",
+            content: `Namaste ${data.naam} ji! 🙏 Wapas aaye!`
+          }]);
+          if (data.fasal && data.beejDate) {
+            setScreen("main");
+          } else {
+            setScreen("naam");
+          }
+        }
+      }
+      setDbLoading(false);
+    }).catch(() => setDbLoading(false));
+  }
+}, []);
+
   useEffect(() => {
     if (screen === "splash") {
       const t = setTimeout(() => setScreen("phone"), 2500);
@@ -375,6 +409,8 @@ function App() {
           if (messages.length === 0) {
             setMessages([{ role: "assistant", content: `Namaste ${kisanNaam} ji! 🙏 Wapas aaye! Aapki ${fasal} fasal track ho rahi hai!` }]);
           }
+          localStorage.setItem("kisan_phone", phone);
+          localStorage.setItem("kisan_pin", pin);
           setScreen("main");
         } else {
           setScreen("naam");
@@ -490,7 +526,7 @@ function App() {
           messages: [
             {
               role: "system",
-              content: `Tu ek experienced Indian agriculture expert hai.
+              content: `Tu ek experienced Indian agriculture expert hai , jisko agriculture ke baare mai sabhi cheej ka pata hai.
 Kisan ka naam: ${kisanNaam}
 Fasal: ${fasal}
 Stage: ${stage}
@@ -500,6 +536,8 @@ Rules:
 - Hamesha Hindi mein jawab de
 - Sirf 2-3 lines mein jawab do
 - Aasan bhasha
+- 1 kyari ka matlab hai 1 acre ka fourth part uske hisaab se jwab do
+- 1 kanal ka matlab hai 1 acre ka 8th part
 - Hanuman Khad Bhandar ki dukan Hatt(Safidon) mein hai
 - Agar kisne banaya puche to batao Hanuman Khad Bhandar ne
 - Zameen ka size poochhe bina matra mat batao
