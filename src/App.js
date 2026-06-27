@@ -284,8 +284,6 @@ function KhataPage({ phone, pin, onBack }) {
           <option>Khad/Urea</option>
           <option>Mazdoori</option>
           <option>Tractor</option>
-          <option>Udhar liya</option>
-          <option>Udhar diya</option>
           <option>Mandi se kamai</option>
           <option>Bijli bill</option>
           <option>Kuch aur</option>
