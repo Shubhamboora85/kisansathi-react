@@ -5,6 +5,7 @@ import ProfilePage from "./components/ProfilePage";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { initializeApp } from "firebase/app";
+import { getFullKnowledgeBase } from "./components/farmKnowledge";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import HomePage from "./components/HomePage";
 import "./App.css";
@@ -142,8 +143,8 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   );
 }
 
-// ===== KHATA PAGE ===== (same as before)
-function KhataPage({ phone, pin, onBack }) {
+// ===== KHATA PAGE =====
+function KhataPage({ phone, onBack }) {
   const [entries, setEntries] = useState([]);
   const [category, setCategory] = useState("Dawaai");
   const [amount, setAmount] = useState("");
@@ -255,7 +256,7 @@ function MandiBhavPage({ onBack }) {
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
           {["Jind","Kaithal","Karnal","Hisar","Rohtak"].map(m => (
-            <button key={m} onClick={() => { setLocation(m); }} style={{ padding: "4px 10px", borderRadius: 20, border: "1px solid rgba(100,180,255,0.25)", background: "rgba(100,180,255,0.08)", color: "#60b8ff", fontSize: 11, cursor: "pointer" }}>{m}</button>
+            <button key={m} onClick={() => setLocation(m)} style={{ padding: "4px 10px", borderRadius: 20, border: "1px solid rgba(100,180,255,0.25)", background: "rgba(100,180,255,0.08)", color: "#60b8ff", fontSize: 11, cursor: "pointer" }}>{m}</button>
           ))}
         </div>
       </div>
@@ -293,6 +294,15 @@ function ChatPage({ messages, loading, onSend, onBack, kisanNaam }) {
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
+  const speakText = (text) => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.lang = "hi-IN";
+    utt.rate = 0.9;
+    window.speechSynthesis.speak(utt);
+  };
+
   const handleVoice = () => {
     if (recording) { recognitionRef.current?.stop(); recognitionRef.current = null; setRecording(false); return; }
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -322,7 +332,8 @@ function ChatPage({ messages, loading, onSend, onBack, kisanNaam }) {
         <AnimatePresence>
           {messages.map((msg, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
-              style={msg.role === "user" ? {
+              style={{ position: "relative" }}>
+              <div style={msg.role === "user" ? {
                 background: "#1e90ff", color: "white", padding: "9px 13px",
                 borderRadius: "16px 16px 4px 16px", margin: "5px 0",
                 maxWidth: "78%", marginLeft: "auto", fontSize: 13
@@ -332,7 +343,13 @@ function ChatPage({ messages, loading, onSend, onBack, kisanNaam }) {
                 margin: "5px 0", maxWidth: "78%", fontSize: 13,
                 border: "1px solid rgba(100,180,255,0.2)"
               }}>
-              {msg.content}
+                {msg.content}
+              </div>
+              {msg.role === "assistant" && (
+                <button onClick={() => speakText(msg.content)}
+                  style={{ background: "none", border: "none", color: "rgba(100,180,255,0.5)", fontSize: 14, cursor: "pointer", padding: "0 4px", marginLeft: 4 }}
+                  title="Sunao">🔊</button>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
@@ -365,8 +382,6 @@ function ChatPage({ messages, loading, onSend, onBack, kisanNaam }) {
 function App() {
   const [screen, setScreen] = useState("splash");
   const [page, setPage] = useState("main");
-  const [streak, setStreak] = useState(0);
-  const [points, setPoints] = useState(0);
   const [phone, setPhone] = useState("");
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
@@ -377,14 +392,35 @@ function App() {
   const [fasal, setFasal] = useState("");
   const [beejDate, setBeejDate] = useState("");
   const [messages, setMessages] = useState([]);
-  const [chatInitMsg, setChatInitMsg] = useState("");
   const [loading, setLoading] = useState(false);
   const [dbLoading, setDbLoading] = useState(false);
   const [weather, setWeather] = useState(null);
   const [forecast, setForecast] = useState([]);
   const [error, setError] = useState("");
   const [showBg, setShowBg] = useState(false);
+  const [userPoints, setUserPoints] = useState(0);
+  const [userStreak, setUserStreak] = useState(0);
 
+  // ===== BACK BUTTON HANDLER =====
+  useEffect(() => {
+    const handleBackButton = () => {
+      if (page !== "main") {
+        setPage("main");
+        window.history.pushState(null, "", window.location.href);
+      } else if (screen === "main") {
+        if (window.confirm("Kya aap app band karna chahte hain?")) {
+          window.history.back();
+        } else {
+          window.history.pushState(null, "", window.location.href);
+        }
+      }
+    };
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handleBackButton);
+    return () => window.removeEventListener("popstate", handleBackButton);
+  }, [page, screen]);
+
+  // ===== AUTO LOGIN =====
   useEffect(() => {
     const savedPhone = localStorage.getItem("kisan_phone");
     const savedPin = localStorage.getItem("kisan_pin");
@@ -394,9 +430,13 @@ function App() {
         if (snap.exists()) {
           const data = snap.data();
           if (data.pin === savedPin) {
-            setKisanNaam(data.naam || ""); setShehar(data.shehar || "");
-            setFasal(data.fasal || ""); setBeejDate(data.beejDate || "");
-            setMessages(data.messages || []);
+            setKisanNaam(data.naam || "");
+            setShehar(data.shehar || "");
+            setFasal(data.fasal || "");
+            setBeejDate(data.beejDate || "");
+            setMessages([]);
+            setUserPoints(data.points || 0);
+            setUserStreak(data.streak || 0);
             if (data.fasal && data.beejDate) setScreen("main");
             else setScreen("naam");
           }
@@ -408,6 +448,7 @@ function App() {
     }
   }, []);
 
+  // ===== WEATHER =====
   useEffect(() => {
     if (shehar && screen === "main") {
       const city = shehar.split(",")[0].trim();
@@ -443,7 +484,8 @@ function App() {
       if (snap.exists()) {
         const data = snap.data();
         setIsNewUser(false); setKisanNaam(data.naam || ""); setShehar(data.shehar || "");
-        setFasal(data.fasal || ""); setBeejDate(data.beejDate || ""); setMessages(data.messages || []);
+        setFasal(data.fasal || ""); setBeejDate(data.beejDate || ""); setMessages([]);
+        setUserPoints(data.points || 0); setUserStreak(data.streak || 0);
       } else setIsNewUser(true);
       setScreen("pin");
     } catch { setError("Internet check karo!"); }
@@ -457,14 +499,15 @@ function App() {
     try {
       if (isNewUser) {
         if (pin !== pinConfirm) { setError("PIN match nahi hua!"); setDbLoading(false); return; }
-        await setDoc(doc(db, "kisans", phone), { phone, pin, naam: "", shehar: "", fasal: "", beejDate: "", messages: [], khata: [] });
+        await setDoc(doc(db, "kisans", phone), { phone, pin, naam: "", shehar: "", fasal: "", beejDate: "", messages: [], khata: [], points: 0, streak: 0 });
         setScreen("naam");
       } else {
         const snap = await getDoc(doc(db, "kisans", phone));
         if (snap.data()?.pin !== pin) { setError("Galat PIN!"); setDbLoading(false); return; }
         localStorage.setItem("kisan_phone", phone);
         localStorage.setItem("kisan_pin", pin);
-        if (fasal && beejDate) { setScreen("main"); } else setScreen("naam");
+        if (fasal && beejDate) setScreen("main");
+        else setScreen("naam");
       }
     } catch { setError("Kuch gadbad hui!"); }
     setDbLoading(false);
@@ -472,7 +515,7 @@ function App() {
 
   const saveData = async (extra = {}) => {
     if (!phone) return;
-    try { await setDoc(doc(db, "kisans", phone), { phone, pin, naam: kisanNaam, shehar, fasal, beejDate, messages, ...extra }, { merge: true }); }
+    try { await setDoc(doc(db, "kisans", phone), { phone, pin, naam: kisanNaam, shehar, fasal, beejDate, ...extra }, { merge: true }); }
     catch (e) { console.log(e); }
   };
 
@@ -536,7 +579,7 @@ function App() {
   const alert = getWeatherAlert();
 
   const sendMessage = async (text) => {
-    if (!text || !text.trim()) return;
+    if (!text || typeof text !== "string" || !text.trim()) return;
     const newMsgs = [...messages, { role: "user", content: text }];
     setMessages(newMsgs); setLoading(true);
     try {
@@ -546,7 +589,11 @@ function App() {
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile", max_tokens: 150,
           messages: [
-            { role: "system", content: `Tu ek experienced Indian agriculture expert hai. Kisan ka naam: ${kisanNaam}, Fasal: ${fasal}, Stage: ${stage}, Din: ${din}. Mausam: ${weather ? `${weather.temp}°C, ${weather.description}` : "N/A"}. Rules: Hindi mein, 2-3 lines mein, aasan bhasha, zameen ka size poochhe bina matra mat batao.` },
+            { role: "system", content: `Tu ek experienced Indian agriculture expert hai. Kisan ka naam: ${kisanNaam}, Fasal: ${fasal}, Stage: ${stage}, Din: ${din}. Mausam: ${weather ? `${weather.temp}°C, ${weather.description}` : "N/A"}.
+
+${getFullKnowledgeBase()}
+
+Rules: Hindi mein, 2-3 lines mein, aasan bhasha, zameen ka size poochhe bina matra mat batao. Upar diye gaye local terms aur units ka istemal samajhne ke liye karo.` },
             ...newMsgs.slice(-10)
           ]
         })
@@ -557,7 +604,6 @@ function App() {
       if (!jawab) throw new Error("No response");
       const updated = [...newMsgs, { role: "assistant", content: jawab }];
       setMessages(updated);
-      try { await saveData({ messages: updated }); } catch {}
     } catch {
       setMessages([...newMsgs, { role: "assistant", content: "Kuch dikkat aayi — dobara try karo!" }]);
     }
@@ -565,30 +611,36 @@ function App() {
   };
 
   const handleOpenChat = (initMsg = "") => {
-  setPage("chat");
-  if (initMsg && typeof initMsg === "string" && initMsg.trim()) {
-    setTimeout(() => sendMessage(initMsg), 300);
-  }
-};
+    setPage("chat");
+    if (initMsg && typeof initMsg === "string" && initMsg.trim()) {
+      setTimeout(() => sendMessage(initMsg), 300);
+    }
+  };
 
-  // Auth screens styles
+  const handleLogout = () => {
+    localStorage.removeItem("kisan_phone");
+    localStorage.removeItem("kisan_pin");
+    setScreen("phone"); setPhone(""); setPin(""); setKisanNaam("");
+    setShehar(""); setFasal(""); setBeejDate(""); setMessages([]);
+    setUserPoints(0); setUserStreak(0); setPage("main");
+  };
+
   const authStyle = { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#050d1a", padding: 20, textAlign: "center" };
   const inputStyle = { width: "85%", padding: "11px 15px", borderRadius: 10, border: "1px solid rgba(100,180,255,0.25)", background: "rgba(100,180,255,0.07)", color: "#fff", fontSize: 14, margin: "7px 0", outline: "none" };
   const btnStyle = { background: "#1e90ff", color: "white", border: "none", borderRadius: 10, padding: "11px 28px", fontSize: 15, fontWeight: "bold", cursor: "pointer", marginTop: 10, width: "85%" };
 
   // ===== PAGE ROUTING =====
   if (page === "chat") return <ChatPage messages={messages} loading={loading} onSend={sendMessage} onBack={() => setPage("main")} kisanNaam={kisanNaam} />;
-  if (page === "khata") return <KhataPage phone={phone} pin={pin} onBack={() => setPage("main")} />;
+  if (page === "khata") return <KhataPage phone={phone} onBack={() => setPage("main")} />;
   if (page === "mandi") return <MandiBhavPage onBack={() => setPage("main")} />;
-  if (page === "quiz") return <QuizPage onBack={() => setPage("main")} db={db} phone={phone} kisanNaam={kisanNaam} />;
+  if (page === "quiz") return <QuizPage onBack={() => setPage("main")} db={db} phone={phone} kisanNaam={kisanNaam} fasal={fasal} />;
   if (page === "yojna") return <YojnaPage onBack={() => setPage("main")} />;
   if (page === "weather") return <WeatherPage onBack={() => setPage("main")} weather={weather} forecast={forecast} getWeatherIcon={getWeatherIcon} shehar={shehar} />;
-  if (page === "profile") return <ProfilePage onBack={() => setPage("main")} kisanNaam={kisanNaam} phone={phone} shehar={shehar} fasal={fasal} beejDate={beejDate} points={points} streak={streak} onLogout={() => { localStorage.removeItem("kisan_phone"); localStorage.removeItem("kisan_pin"); setScreen("phone"); setPhone(""); setPin(""); setKisanNaam(""); setShehar(""); setFasal(""); setBeejDate(""); setMessages([]); setPage("main"); }} onChangeFasal={() => { setPage("main"); setScreen("fasal"); }} />;
+  if (page === "profile") return <ProfilePage onBack={() => setPage("main")} kisanNaam={kisanNaam} phone={phone} shehar={shehar} fasal={fasal} beejDate={beejDate} points={userPoints} streak={userStreak} onLogout={handleLogout} onChangeFasal={() => { setPage("main"); setScreen("fasal"); }} />;
 
   // ===== SPLASH =====
   if (screen === "splash" || (dbLoading && !kisanNaam)) return (
-    <motion.div style={{ ...authStyle }}
-      initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
+    <motion.div style={authStyle} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} transition={{ delay: 0.3, type: "spring" }} style={{ fontSize: 80 }}>🌾</motion.div>
       <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} style={{ color: "#60b8ff" }}>Kisan Saathi</motion.h1>
       <motion.h3 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} style={{ color: "rgba(255,255,255,0.7)" }}>Hanuman Khad Bhandar</motion.h3>
@@ -674,14 +726,14 @@ function App() {
         if (fasal && beejDate) {
           const initMsgs = [{ role: "assistant", content: `Namaste ${kisanNaam} ji! 🙏 Aapki ${fasal} fasal ka track shuru ho gaya!` }];
           setMessages(initMsgs);
-          await saveData({ fasal, beejDate, messages: initMsgs });
+          await saveData({ fasal, beejDate });
           setScreen("main");
         }
       }}>🚀 Tracking Shuru Karein</motion.button>
     </motion.div>
   );
 
-  // ===== MAIN — SVG BACKGROUND FULLSCREEN =====
+  // ===== SVG BACKGROUND FULLSCREEN =====
   if (showBg) return (
     <div style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", position: "relative", background: "#87CEEB", overflow: "hidden" }}
       onClick={() => setShowBg(false)}>
