@@ -18,16 +18,17 @@ export default function HomePage({
   const [leaderboard, setLeaderboard] = useState([]);
   const [activeNav, setActiveNav] = useState("home");
 
-  useEffect(() => {
-    if (!phone) return;
-    checkAndUpdateStreak(db, phone).then(res => {
-      setStreak(res.streak);
-      setPoints(res.points);
-      setStreakDays(getStreakDays(res.streak));
-    });
-    getLeaderboard(db).then(setLeaderboard);
-    fetchNearestMandi();
-  }, [phone]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => {
+  if (!phone) return;
+  checkAndUpdateStreak(db, phone).then(res => {
+    setStreak(res.streak);
+    setPoints(res.points);
+    setStreakDays(getStreakDays(res.streak));
+  });
+  getLeaderboard(db).then(setLeaderboard);
+  fetchNearestMandi();
+}, [phone]);
 
   const fetchNearestMandi = async () => {
     setMandiLoading(true);

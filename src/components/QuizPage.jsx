@@ -33,6 +33,7 @@ export default function QuizPage({ onBack, db, phone, kisanNaam }) {
   const [totalPoints, setTotalPoints] = useState(0);
   const [showDiscount, setShowDiscount] = useState(false);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const todayKey = new Date().toDateString();
     const played = localStorage.getItem(`quiz_played_${phone}`);
