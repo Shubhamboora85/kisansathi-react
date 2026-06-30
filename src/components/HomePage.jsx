@@ -8,7 +8,7 @@ export default function HomePage({
   db, phone, kisanNaam, shehar, fasal, beejDate,
   weather, forecast, stage, advice, din, alert,
   getWeatherIcon, onOpenChat, onOpenKhata, onOpenMandi,
-  onOpenBg, onOpenQuiz, onOpenYojna, onOpenWeather, onOpenProfile,
+  onOpenBg, onOpenQuiz, onOpenYojna, onOpenWeather, onOpenProfile, onOpenCommunity,
 }) {
   const [streak, setStreak] = useState(0);
   const [points, setPoints] = useState(0);
@@ -18,37 +18,37 @@ export default function HomePage({
   const [leaderboard, setLeaderboard] = useState([]);
   const [activeNav, setActiveNav] = useState("home");
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-useEffect(() => {
-  if (!phone) return;
-  checkAndUpdateStreak(db, phone).then(res => {
-    setStreak(res.streak);
-    setPoints(res.points);
-    setStreakDays(getStreakDays(res.streak));
-  });
-  getLeaderboard(db).then(setLeaderboard);
-  fetchNearestMandi();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [phone, db]);
+  useEffect(() => {
+    if (!phone) return;
+    checkAndUpdateStreak(db, phone).then(res => {
+      setStreak(res.streak);
+      setPoints(res.points);
+      setStreakDays(getStreakDays(res.streak));
+    });
+    getLeaderboard(db).then(setLeaderboard);
+    fetchNearestMandi();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone, db]);
 
   const fetchNearestMandi = async () => {
-  setMandiLoading(true);
-  const districtName = shehar?.split(",")[0]?.trim() || "Jind";
-  const tryMandis = [districtName, ...NEARBY_MANDIS];
-  for (const mandi of tryMandis) {
-    try {
-      const res = await fetch(
-        `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${process.env.REACT_APP_MANDI_KEY}&format=json&filters[district]=${encodeURIComponent(mandi)}&limit=5`
-      );
-      const data = await res.json();
-      if (data.records && data.records.length > 0) {
-        setMandiData(data.records.slice(0, 3));
-        break;
-      }
-    } catch { continue; }
-  }
-  setMandiLoading(false);
-};
+    setMandiLoading(true);
+    const districtName = shehar?.split(",")[0]?.trim() || "Jind";
+    const tryMandis = [districtName, ...NEARBY_MANDIS];
+    for (const mandi of tryMandis) {
+      try {
+        const res = await fetch(
+          `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${process.env.REACT_APP_MANDI_KEY}&format=json&filters[district]=${encodeURIComponent(mandi)}&limit=5`
+        );
+        const data = await res.json();
+        if (data.records && data.records.length > 0) {
+          setMandiData(data.records.slice(0, 3));
+          break;
+        }
+      } catch { continue; }
+    }
+    setMandiLoading(false);
+  };
 
   const cropStages = {
     "🌾 Chawal (Rice)": ["Beej","Nursery","Transplant","Tillering","Harvest"],
@@ -77,6 +77,7 @@ useEffect(() => {
   function goWeather() { onOpenWeather(); }
   function goProfile() { onOpenProfile(); }
   function goBg() { onOpenBg(); }
+  function goCommunity() { onOpenCommunity(); }
 
   const features = [
     { icon: "🤖", label: "AI Salah", fn: goAI },
@@ -84,6 +85,7 @@ useEffect(() => {
     { icon: "📋", label: "Khata", fn: goKhata },
     { icon: "🏛️", label: "Yojna", fn: goYojna, badge: true },
     { icon: "🎯", label: "Quiz", fn: goQuiz },
+    { icon: "👥", label: "Samuday", fn: goCommunity },
   ];
 
   function handleNavClick(key) {

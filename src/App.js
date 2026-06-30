@@ -2,12 +2,15 @@ import QuizPage from "./components/QuizPage";
 import YojnaPage from "./components/YojnaPage";
 import WeatherPage from "./components/WeatherPage";
 import ProfilePage from "./components/ProfilePage";
-import { useState, useEffect, useRef } from "react";
+import ChatPage from "./components/ChatPage";
+import CommunityPage from "./components/CommunityPage";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { initializeApp } from "firebase/app";
-import { getFullKnowledgeBase } from "./components/farmKnowledge";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import HomePage from "./components/HomePage";
+import { setupNotifications } from "./components/notifications";
+import { getFullKnowledgeBase } from "./components/farmKnowledge";
 import "./App.css";
 
 const firebaseConfig = {
@@ -231,15 +234,15 @@ function MandiBhavPage({ onBack }) {
   const [searched, setSearched] = useState(false);
 
   const getMandiBhav = async () => {
-  if (!location.trim()) return;
-  setLoading(true); setSearched(true);
-  try {
-    const res = await fetch(`https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${process.env.REACT_APP_MANDI_KEY}&format=json&filters[district]=${encodeURIComponent(location)}&limit=20`);
-    const data = await res.json();
-    setBhav(data.records && data.records.length > 0 ? data.records : []);
-  } catch { setBhav([]); }
-  setLoading(false);
-};
+    if (!location.trim()) return;
+    setLoading(true); setSearched(true);
+    try {
+      const res = await fetch(`https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${process.env.REACT_APP_MANDI_KEY}&format=json&filters[district]=${encodeURIComponent(location)}&limit=20`);
+      const data = await res.json();
+      setBhav(data.records && data.records.length > 0 ? data.records : []);
+    } catch { setBhav([]); }
+    setLoading(false);
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: "#050d1a", display: "flex", flexDirection: "column" }}>
@@ -280,99 +283,6 @@ function MandiBhavPage({ onBack }) {
       </div>
       <div style={{ padding: "8px 12px", background: "rgba(7,21,40,0.97)", borderTop: "1px solid rgba(100,180,255,0.1)" }}>
         <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>⚠️ Bhav thoda upar neeche ho sakta hai — mandi jaane se pehle confirm karein</div>
-      </div>
-    </div>
-  );
-}
-
-// ===== CHAT PAGE =====
-function ChatPage({ messages, loading, onSend, onBack, kisanNaam }) {
-  const [input, setInput] = useState("");
-  const [recording, setRecording] = useState(false);
-  const chatEndRef = useRef(null);
-  const recognitionRef = useRef(null);
-
-  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-
-  const speakText = (text) => {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = "hi-IN";
-    utt.rate = 0.9;
-    window.speechSynthesis.speak(utt);
-  };
-
-  const handleVoice = () => {
-    if (recording) { recognitionRef.current?.stop(); recognitionRef.current = null; setRecording(false); return; }
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { alert("Chrome use karo!"); return; }
-    const r = new SR();
-    r.lang = "hi-IN"; r.continuous = false; r.interimResults = false;
-    r.onstart = () => setRecording(true);
-    r.onresult = e => { setInput(e.results[0][0].transcript); setRecording(false); recognitionRef.current = null; };
-    r.onerror = r.onend = () => { setRecording(false); recognitionRef.current = null; };
-    recognitionRef.current = r;
-    r.start();
-  };
-
-  return (
-    <div style={{ minHeight: "100vh", background: "#050d1a", display: "flex", flexDirection: "column" }}>
-      <div style={{ background: "#071528", borderBottom: "1px solid rgba(100,180,255,0.15)", padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#60b8ff", fontSize: 20, cursor: "pointer" }}>←</button>
-        <span style={{ color: "#60b8ff", fontWeight: "bold", fontSize: 16 }}>🤖 Kisan Saathi AI</span>
-      </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "8px 10px" }}>
-        {messages.length === 0 && (
-          <div style={{ textAlign: "center", padding: 30, color: "rgba(100,180,255,0.5)" }}>
-            <div style={{ fontSize: 40 }}>🌾</div>
-            <div style={{ fontSize: 14 }}>Namaste {kisanNaam} ji! Koi bhi sawaal poochho!</div>
-          </div>
-        )}
-        <AnimatePresence>
-          {messages.map((msg, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}
-              style={{ position: "relative" }}>
-              <div style={msg.role === "user" ? {
-                background: "#1e90ff", color: "white", padding: "9px 13px",
-                borderRadius: "16px 16px 4px 16px", margin: "5px 0",
-                maxWidth: "78%", marginLeft: "auto", fontSize: 13
-              } : {
-                background: "rgba(10,40,100,0.6)", color: "#e0f0ff",
-                padding: "9px 13px", borderRadius: "16px 16px 16px 4px",
-                margin: "5px 0", maxWidth: "78%", fontSize: 13,
-                border: "1px solid rgba(100,180,255,0.2)"
-              }}>
-                {msg.content}
-              </div>
-              {msg.role === "assistant" && (
-                <button onClick={() => speakText(msg.content)}
-                  style={{ background: "none", border: "none", color: "rgba(100,180,255,0.5)", fontSize: 14, cursor: "pointer", padding: "0 4px", marginLeft: 4 }}
-                  title="Sunao">🔊</button>
-              )}
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        {loading && (
-          <motion.div animate={{ opacity: [0.5, 1, 0.5] }} transition={{ duration: 0.8, repeat: Infinity }}
-            style={{ background: "rgba(10,40,100,0.6)", color: "#60b8ff", padding: "9px 13px", borderRadius: "16px 16px 16px 4px", margin: "5px 0", maxWidth: "78%", fontSize: 13, border: "1px solid rgba(100,180,255,0.2)" }}>
-            Soch raha hoon... ⏳
-          </motion.div>
-        )}
-        <div ref={chatEndRef} />
-      </div>
-      <div style={{ display: "flex", alignItems: "center", padding: "7px 8px", background: "rgba(7,21,40,0.97)", borderTop: "1px solid rgba(100,180,255,0.12)", gap: 5 }}>
-        <input value={input} onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && !loading && (onSend(input), setInput(""))}
-          placeholder={recording ? "Bol rahe ho... 🎤" : "Sawaal likhein..."}
-          style={{ flex: 1, padding: "8px 12px", borderRadius: 25, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.07)", color: "#fff", fontSize: 13, outline: "none" }} />
-        <motion.button whileTap={{ scale: 0.8 }} onClick={handleVoice}
-          style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", padding: 4, color: recording ? "red" : "#60b8ff" }}>
-          {recording ? "🔴" : "🎤"}
-        </motion.button>
-        <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-          onClick={() => { if (!loading && input.trim()) { onSend(input); setInput(""); } }}
-          style={{ background: "#1e90ff", color: "white", border: "none", borderRadius: "50%", width: 36, height: 36, fontSize: 15, cursor: "pointer" }}>➤</motion.button>
       </div>
     </div>
   );
@@ -447,6 +357,14 @@ function App() {
       setTimeout(() => setScreen("phone"), 2500);
     }
   }, []);
+
+  // ===== NOTIFICATIONS SETUP =====
+  useEffect(() => {
+    if (phone && screen === "main") {
+      setupNotifications(app, db, phone);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone, screen]);
 
   // ===== WEATHER =====
   useEffect(() => {
@@ -587,7 +505,7 @@ function App() {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile", max_tokens: 150,
+          model: "llama-3.3-70b-versatile", max_tokens: 200,
           messages: [
             { role: "system", content: `Tu ek experienced Indian agriculture expert hai. Kisan ka naam: ${kisanNaam}, Fasal: ${fasal}, Stage: ${stage}, Din: ${din}. Mausam: ${weather ? `${weather.temp}°C, ${weather.description}` : "N/A"}.
 
@@ -606,6 +524,40 @@ Rules: Hindi mein, 2-3 lines mein, aasan bhasha, zameen ka size poochhe bina mat
       setMessages(updated);
     } catch {
       setMessages([...newMsgs, { role: "assistant", content: "Kuch dikkat aayi — dobara try karo!" }]);
+    }
+    setLoading(false);
+  };
+
+  const sendImageMessage = async (base64Image) => {
+    const newMsgs = [...messages, { role: "user", content: "Fasal ki photo bheji", image: base64Image }];
+    setMessages(newMsgs);
+    setLoading(true);
+    try {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
+        body: JSON.stringify({
+          model: "meta-llama/llama-4-maverick-17b-128e-instruct",
+          max_tokens: 300,
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: `Tu ek experienced Indian agriculture expert hai. Is photo mein dikh rahi fasal/patte ko dekho aur batao: 1) Kya disease ya nutrient deficiency dikh rahi hai, 2) Iska kaaran kya hai, 3) Kya treatment karna chahiye. Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do. Agar photo saaf nahi hai ya fasal nahi dikh rahi, to bolo dobara saaf photo bhejo.` },
+                { type: "image_url", image_url: { url: base64Image } }
+              ]
+            }
+          ]
+        })
+      });
+      if (!res.ok) throw new Error("API Error");
+      const data = await res.json();
+      const jawab = data?.choices?.[0]?.message?.content;
+      if (!jawab) throw new Error("No response");
+      const updated = [...newMsgs, { role: "assistant", content: jawab }];
+      setMessages(updated);
+    } catch {
+      setMessages([...newMsgs, { role: "assistant", content: "Photo samajhne mein dikkat aayi — dobara saaf photo bhejo!" }]);
     }
     setLoading(false);
   };
@@ -630,13 +582,14 @@ Rules: Hindi mein, 2-3 lines mein, aasan bhasha, zameen ka size poochhe bina mat
   const btnStyle = { background: "#1e90ff", color: "white", border: "none", borderRadius: 10, padding: "11px 28px", fontSize: 15, fontWeight: "bold", cursor: "pointer", marginTop: 10, width: "85%" };
 
   // ===== PAGE ROUTING =====
-  if (page === "chat") return <ChatPage messages={messages} loading={loading} onSend={sendMessage} onBack={() => setPage("main")} kisanNaam={kisanNaam} />;
+  if (page === "chat") return <ChatPage messages={messages} loading={loading} onSend={sendMessage} onSendImage={sendImageMessage} onBack={() => setPage("main")} kisanNaam={kisanNaam} />;
   if (page === "khata") return <KhataPage phone={phone} onBack={() => setPage("main")} />;
   if (page === "mandi") return <MandiBhavPage onBack={() => setPage("main")} />;
   if (page === "quiz") return <QuizPage onBack={() => setPage("main")} db={db} phone={phone} kisanNaam={kisanNaam} fasal={fasal} />;
   if (page === "yojna") return <YojnaPage onBack={() => setPage("main")} />;
   if (page === "weather") return <WeatherPage onBack={() => setPage("main")} weather={weather} forecast={forecast} getWeatherIcon={getWeatherIcon} shehar={shehar} />;
   if (page === "profile") return <ProfilePage onBack={() => setPage("main")} kisanNaam={kisanNaam} phone={phone} shehar={shehar} fasal={fasal} beejDate={beejDate} points={userPoints} streak={userStreak} onLogout={handleLogout} onChangeFasal={() => { setPage("main"); setScreen("fasal"); }} />;
+  if (page === "community") return <CommunityPage onBack={() => setPage("main")} db={db} kisanNaam={kisanNaam} phone={phone} />;
 
   // ===== SPLASH =====
   if (screen === "splash" || (dbLoading && !kisanNaam)) return (
@@ -769,6 +722,7 @@ Rules: Hindi mein, 2-3 lines mein, aasan bhasha, zameen ka size poochhe bina mat
       onOpenProfile={() => setPage("profile")}
       onOpenKhata={() => setPage("khata")}
       onOpenMandi={() => setPage("mandi")}
+      onOpenCommunity={() => setPage("community")}
       onOpenBg={() => setShowBg(true)}
       isNight={isNight}
       isRain={isRain}
