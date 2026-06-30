@@ -32,23 +32,23 @@ useEffect(() => {
 }, [phone, db]);
 
   const fetchNearestMandi = async () => {
-    setMandiLoading(true);
-    const districtName = shehar?.split(",")[0]?.trim() || "Jind";
-    const tryMandis = [districtName, ...NEARBY_MANDIS];
-    for (const mandi of tryMandis) {
-      try {
-        const res = await fetch(
-          `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${process.env.REACT_APP_MANDI_KEY}&format=json&filters[State.keyword]=Haryana&filters[District]=${mandi}&limit=5`
-        );
-        const data = await res.json();
-        if (data.records && data.records.length > 0) {
-          setMandiData(data.records.slice(0, 3));
-          break;
-        }
-      } catch { continue; }
-    }
-    setMandiLoading(false);
-  };
+  setMandiLoading(true);
+  const districtName = shehar?.split(",")[0]?.trim() || "Jind";
+  const tryMandis = [districtName, ...NEARBY_MANDIS];
+  for (const mandi of tryMandis) {
+    try {
+      const res = await fetch(
+        `https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${process.env.REACT_APP_MANDI_KEY}&format=json&filters[district]=${encodeURIComponent(mandi)}&limit=5`
+      );
+      const data = await res.json();
+      if (data.records && data.records.length > 0) {
+        setMandiData(data.records.slice(0, 3));
+        break;
+      }
+    } catch { continue; }
+  }
+  setMandiLoading(false);
+};
 
   const cropStages = {
     "🌾 Chawal (Rice)": ["Beej","Nursery","Transplant","Tillering","Harvest"],

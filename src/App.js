@@ -231,15 +231,15 @@ function MandiBhavPage({ onBack }) {
   const [searched, setSearched] = useState(false);
 
   const getMandiBhav = async () => {
-    if (!location.trim()) return;
-    setLoading(true); setSearched(true);
-    try {
-      const res = await fetch(`https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${process.env.REACT_APP_MANDI_KEY}&format=json&filters[State.keyword]=Haryana&filters[District]=${location}&limit=20`);
-      const data = await res.json();
-      setBhav(data.records && data.records.length > 0 ? data.records : []);
-    } catch { setBhav([]); }
-    setLoading(false);
-  };
+  if (!location.trim()) return;
+  setLoading(true); setSearched(true);
+  try {
+    const res = await fetch(`https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${process.env.REACT_APP_MANDI_KEY}&format=json&filters[district]=${encodeURIComponent(location)}&limit=20`);
+    const data = await res.json();
+    setBhav(data.records && data.records.length > 0 ? data.records : []);
+  } catch { setBhav([]); }
+  setLoading(false);
+};
 
   return (
     <div style={{ minHeight: "100vh", background: "#050d1a", display: "flex", flexDirection: "column" }}>
