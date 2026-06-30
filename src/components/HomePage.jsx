@@ -28,6 +28,7 @@ useEffect(() => {
   });
   getLeaderboard(db).then(setLeaderboard);
   fetchNearestMandi();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [phone, db]);
 
   const fetchNearestMandi = async () => {
