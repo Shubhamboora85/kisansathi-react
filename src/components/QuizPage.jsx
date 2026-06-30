@@ -50,7 +50,7 @@ export default function QuizPage({ onBack, db, phone, kisanNaam }) {
         if (snap.exists()) setTotalPoints(snap.data().points || 0);
       });
     }
-  }, [phone]);
+  }, [phone, db]);
 
   const handleAnswer = async (idx) => {
     if (selected !== null) return;

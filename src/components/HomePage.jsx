@@ -28,7 +28,7 @@ useEffect(() => {
   });
   getLeaderboard(db).then(setLeaderboard);
   fetchNearestMandi();
-}, [phone]);
+}, [phone, db]);
 
   const fetchNearestMandi = async () => {
     setMandiLoading(true);
