@@ -374,13 +374,33 @@ function App() {
         .then(r => r.json()).then(data => {
           if (data?.main) setWeather({ temp: Math.round(data.main.temp), humidity: data.main.humidity, description: data.weather[0].description, id: data.weather[0].id, wind: Math.round(data.wind.speed), city: data.name });
         }).catch(() => {});
-      fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city},IN&appid=${process.env.REACT_APP_WEATHER_KEY}&units=metric&lang=hi&cnt=4`)
-        .then(r => r.json()).then(data => {
-          if (data?.list) setForecast(data.list.slice(1, 4).map(d => ({
-            date: new Date(d.dt * 1000).toLocaleDateString("hi-IN", { weekday: "short", day: "numeric" }),
-            temp: Math.round(d.main.temp), desc: d.weather[0].description, id: d.weather[0].id
-          })));
-        }).catch(() => {});
+      fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city},IN&appid=${process.env.REACT_APP_WEATHER_KEY}&units=metric&lang=hi`)
+  .then(r => r.json()).then(data => {
+    if (data?.list) {
+      const today = new Date().toDateString();
+      const seenDates = new Set([today]);
+      const dailyForecasts = [];
+
+      for (const d of data.list) {
+        const entryDate = new Date(d.dt * 1000);
+        const dateStr = entryDate.toDateString();
+        const hour = entryDate.getHours();
+
+        // Sirf naye dino ka data lo, aur dopahar ke aaspaas ka time prefer karo (12-15 ke beech)
+        if (!seenDates.has(dateStr) && (hour >= 11 && hour <= 15)) {
+          seenDates.add(dateStr);
+          dailyForecasts.push({
+            date: entryDate.toLocaleDateString("hi-IN", { weekday: "short", day: "numeric" }),
+            temp: Math.round(d.main.temp),
+            desc: d.weather[0].description,
+            id: d.weather[0].id
+          });
+        }
+        if (dailyForecasts.length === 3) break;
+      }
+      setForecast(dailyForecasts);
+    }
+  }).catch(() => {});
     }
   }, [shehar, screen]);
 
