@@ -528,39 +528,47 @@ Rules: Hindi mein, 2-3 lines mein, aasan bhasha, zameen ka size poochhe bina mat
     setLoading(false);
   };
 
-  const sendImageMessage = async (base64Image) => {
-    const newMsgs = [...messages, { role: "user", content: "Fasal ki photo bheji", image: base64Image }];
-    setMessages(newMsgs);
-    setLoading(true);
-    try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
-        body: JSON.stringify({
-          model: "meta-llama/llama-4-maverick-17b-128e-instruct",
-          max_tokens: 300,
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: `Tu ek experienced Indian agriculture expert hai. Is photo mein dikh rahi fasal/patte ko dekho aur batao: 1) Kya disease ya nutrient deficiency dikh rahi hai, 2) Iska kaaran kya hai, 3) Kya treatment karna chahiye. Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do. Agar photo saaf nahi hai ya fasal nahi dikh rahi, to bolo dobara saaf photo bhejo.` },
-                { type: "image_url", image_url: { url: base64Image } }
-              ]
-            }
-          ]
-        })
-      });
-      if (!res.ok) throw new Error("API Error");
-      const data = await res.json();
-      const jawab = data?.choices?.[0]?.message?.content;
-      if (!jawab) throw new Error("No response");
-      const updated = [...newMsgs, { role: "assistant", content: jawab }];
-      setMessages(updated);
-    } catch {
-      setMessages([...newMsgs, { role: "assistant", content: "Photo samajhne mein dikkat aayi — dobara saaf photo bhejo!" }]);
-    }
-    setLoading(false);
-  };
+  const sendImageMessage = async (base64Image, userQuestion = "") => {
+  const newMsgs = [...messages, { role: "user", content: userQuestion || "Photo bheji", image: base64Image }];
+  setMessages(newMsgs);
+  setLoading(true);
+  try {
+    const promptText = userQuestion
+      ? `Tu ek experienced Indian agriculture expert hai. Is photo ko dekho — yeh fasal, patta, keeda, ya dawai/khad ki packet kuch bhi ho sakti hai. User ka sawaal hai: "${userQuestion}". Photo ke context mein iska jawab do — Hindi mein, 3-4 lines mein, aasan bhasha mein.`
+      : `Tu ek experienced Indian agriculture expert hai. Is photo ko pehle pehchano ki yeh kya hai:
+1) Agar yeh FASAL/PATTA hai — bimari ya nutrient deficiency batao, kaaran batao, treatment batao.
+2) Agar yeh DAWAI/KHAD ki packet/bottle hai — uska naam, active ingredient, kis cheez ke liye use hoti hai, aur sahi matra/dosage batao per acre.
+3) Agar dono mein se kuch nahi samajh aaye, to bolo dobara saaf photo bhejo.
+Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
+
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
+      body: JSON.stringify({
+        model: "meta-llama/llama-4-maverick-17b-128e-instruct",
+        max_tokens: 350,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: promptText },
+              { type: "image_url", image_url: { url: base64Image } }
+            ]
+          }
+        ]
+      })
+    });
+    if (!res.ok) throw new Error("API Error");
+    const data = await res.json();
+    const jawab = data?.choices?.[0]?.message?.content;
+    if (!jawab) throw new Error("No response");
+    const updated = [...newMsgs, { role: "assistant", content: jawab }];
+    setMessages(updated);
+  } catch {
+    setMessages([...newMsgs, { role: "assistant", content: "Photo samajhne mein dikkat aayi — dobara saaf photo bhejo!" }]);
+  }
+  setLoading(false);
+};
 
   const handleOpenChat = (initMsg = "") => {
     setPage("chat");

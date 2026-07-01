@@ -5,6 +5,7 @@ export default function ChatPage({ messages, loading, onSend, onSendImage, onBac
   const [input, setInput] = useState("");
   const [recording, setRecording] = useState(false);
   const [showImageOptions, setShowImageOptions] = useState(false);
+  const [pendingImage, setPendingImage] = useState(null);
   const chatEndRef = useRef(null);
   const recognitionRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -40,10 +41,22 @@ export default function ChatPage({ messages, loading, onSend, onSendImage, onBac
     setShowImageOptions(false);
     const reader = new FileReader();
     reader.onload = (event) => {
-      onSendImage(event.target.result);
+      setPendingImage(event.target.result);
     };
     reader.readAsDataURL(file);
     e.target.value = "";
+  };
+
+  const handleSend = () => {
+    if (loading) return;
+    if (pendingImage) {
+      onSendImage(pendingImage, input.trim());
+      setPendingImage(null);
+      setInput("");
+    } else if (input.trim()) {
+      onSend(input);
+      setInput("");
+    }
   };
 
   return (
@@ -57,7 +70,7 @@ export default function ChatPage({ messages, loading, onSend, onSendImage, onBac
         {messages.length === 0 && (
           <div style={{ textAlign: "center", padding: 30, color: "rgba(100,180,255,0.5)" }}>
             <div style={{ fontSize: 40 }}>🌾</div>
-            <div style={{ fontSize: 14 }}>Namaste {kisanNaam} ji! Koi bhi sawaal poochho, ya fasal ki photo bhejo!</div>
+            <div style={{ fontSize: 14 }}>Namaste {kisanNaam} ji! Koi bhi sawaal poochho, ya fasal/dawai ki photo bhejo!</div>
           </div>
         )}
         <AnimatePresence>
@@ -75,7 +88,7 @@ export default function ChatPage({ messages, loading, onSend, onSendImage, onBac
                 border: "1px solid rgba(100,180,255,0.2)"
               }}>
                 {msg.image && (
-                  <img src={msg.image} alt="uploaded crop" style={{ width: "100%", maxWidth: 200, borderRadius: 10, marginBottom: 6, display: "block" }} />
+                  <img src={msg.image} alt="uploaded" style={{ width: "100%", maxWidth: 200, borderRadius: 10, marginBottom: 6, display: "block" }} />
                 )}
                 {msg.content}
               </div>
@@ -119,21 +132,38 @@ export default function ChatPage({ messages, loading, onSend, onSendImage, onBac
         )}
       </AnimatePresence>
 
+      {/* Pending Image Preview */}
+      <AnimatePresence>
+        {pendingImage && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+            style={{ background: "rgba(7,21,40,0.98)", borderTop: "1px solid rgba(100,180,255,0.15)", padding: "10px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+            <img src={pendingImage} alt="preview" style={{ width: 50, height: 50, borderRadius: 8, objectFit: "cover" }} />
+            <div style={{ flex: 1, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>
+              Photo ready hai — kuch specific poochna hai to type karo, ya seedha bhejo
+            </div>
+            <button onClick={() => setPendingImage(null)}
+              style={{ background: "rgba(255,80,80,0.15)", border: "1px solid rgba(255,80,80,0.3)", color: "#ff6666", borderRadius: 8, width: 28, height: 28, cursor: "pointer", fontSize: 14 }}>
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div style={{ display: "flex", alignItems: "center", padding: "7px 8px", background: "rgba(7,21,40,0.97)", borderTop: "1px solid rgba(100,180,255,0.12)", gap: 5 }}>
         <motion.button whileTap={{ scale: 0.8 }} onClick={() => setShowImageOptions(!showImageOptions)}
           style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", padding: 4, color: "#60b8ff" }}>
           📷
         </motion.button>
         <input value={input} onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && !loading && (onSend(input), setInput(""))}
-          placeholder={recording ? "Bol rahe ho... 🎤" : "Sawaal likhein..."}
+          onKeyDown={e => e.key === "Enter" && handleSend()}
+          placeholder={pendingImage ? "Kuch poochna hai? (optional)" : recording ? "Bol rahe ho... 🎤" : "Sawaal likhein..."}
           style={{ flex: 1, padding: "8px 12px", borderRadius: 25, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.07)", color: "#fff", fontSize: 13, outline: "none" }} />
         <motion.button whileTap={{ scale: 0.8 }} onClick={handleVoice}
           style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", padding: 4, color: recording ? "red" : "#60b8ff" }}>
           {recording ? "🔴" : "🎤"}
         </motion.button>
         <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-          onClick={() => { if (!loading && input.trim()) { onSend(input); setInput(""); } }}
+          onClick={handleSend}
           style={{ background: "#1e90ff", color: "white", border: "none", borderRadius: "50%", width: 36, height: 36, fontSize: 15, cursor: "pointer" }}>➤</motion.button>
       </div>
     </div>
