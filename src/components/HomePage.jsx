@@ -230,19 +230,25 @@ export default function HomePage({
           </motion.div>
         )}
 
-        {/* ===== Quiz + Community row ===== */}
-        <div style={{ margin: "0 16px 12px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <motion.div style={{ ...C.gi, background: "rgba(255,215,0,0.08)", border: "1px solid rgba(255,215,0,0.2)", flexDirection: "column", alignItems: "flex-start", gap: 4 }}
-            whileTap={{ scale: 0.96 }} onClick={goQuiz} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}>
-            <div style={{ fontSize: 18 }}>🎯</div>
-            <div style={{ fontSize: 11, color: "#fff", fontWeight: 700 }}>Aaj ka Quiz</div>
-            <div style={{ fontSize: 8.5, color: "#ffd966" }}>5 sawaal · 50 pts</div>
+        {/* ===== Quiz + Khata + Community row ===== */}
+        <div style={{ margin: "0 16px 12px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+          <motion.div style={{ ...C.gi, background: "rgba(255,215,0,0.08)", border: "1px solid rgba(255,215,0,0.2)", flexDirection: "column", alignItems: "flex-start", gap: 3, padding: "11px 10px" }}
+            whileTap={{ scale: 0.96 }} onClick={goQuiz} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.32 }}>
+            <div style={{ fontSize: 16 }}>🎯</div>
+            <div style={{ fontSize: 10, color: "#fff", fontWeight: 700 }}>Quiz</div>
+            <div style={{ fontSize: 7.5, color: "#ffd966" }}>50 pts</div>
           </motion.div>
-          <motion.div style={{ ...C.gi, background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)", flexDirection: "column", alignItems: "flex-start", gap: 4 }}
+          <motion.div style={{ ...C.gi, background: "rgba(120,220,180,0.08)", border: "1px solid rgba(120,220,180,0.2)", flexDirection: "column", alignItems: "flex-start", gap: 3, padding: "11px 10px" }}
+            whileTap={{ scale: 0.96 }} onClick={goKhata} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.36 }}>
+            <div style={{ fontSize: 16 }}>📒</div>
+            <div style={{ fontSize: 10, color: "#fff", fontWeight: 700 }}>Khata</div>
+            <div style={{ fontSize: 7.5, color: "#7fd8a0" }}>Hisaab</div>
+          </motion.div>
+          <motion.div style={{ ...C.gi, background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)", flexDirection: "column", alignItems: "flex-start", gap: 3, padding: "11px 10px" }}
             whileTap={{ scale: 0.96 }} onClick={goCommunity} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-            <div style={{ fontSize: 18 }}>👥</div>
-            <div style={{ fontSize: 11, color: "#fff", fontWeight: 700 }}>Samuday</div>
-            <div style={{ fontSize: 8.5, color: "#c9a1ff" }}>Kisano se judo</div>
+            <div style={{ fontSize: 16 }}>👥</div>
+            <div style={{ fontSize: 10, color: "#fff", fontWeight: 700 }}>Samuday</div>
+            <div style={{ fontSize: 7.5, color: "#c9a1ff" }}>Judo</div>
           </motion.div>
         </div>
 
