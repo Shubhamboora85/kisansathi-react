@@ -50,24 +50,7 @@ export default function HomePage({
     setMandiLoading(false);
   };
 
-  const cropStages = {
-    "🌾 Chawal (Rice)": ["Beej","Nursery","Transplant","Tillering","Harvest"],
-    "🌿 Gehun (Wheat)": ["Beej","Jamav","Tillering","Bali","Harvest"],
-    "🟡 Sarso (Mustard)": ["Beej","Jamav","Phool","Daana","Harvest"],
-    "🍬 Ganna (Sugarcane)": ["Beej","Jamav","Growth","Ripening","Harvest"],
-  };
-
   const progressPercent = Math.min((din / 120) * 100, 100);
-  const stages = cropStages[fasal] || ["Beej","Jamav","Growth","Ripening","Harvest"];
-
-  const getActiveStageIndex = () => {
-    if (din <= 10) return 0;
-    if (din <= 25) return 1;
-    if (din <= 60) return 2;
-    if (din <= 100) return 3;
-    return 4;
-  };
-  const activeStageIdx = getActiveStageIndex();
 
   function goAI() { onOpenChat(""); }
   function goMandi() { onOpenMandi(); }
@@ -82,30 +65,30 @@ export default function HomePage({
   function handleNavClick(key) {
     setActiveNav(key);
     if (key === "home") return;
-    if (key === "weather") return goWeather();
     if (key === "ai") return goAI();
     if (key === "mandi") return goMandi();
     if (key === "profile") return goProfile();
+    if (key === "center") return goCommunity();
   }
+
+  const ringR = 22;
+  const ringCirc = 2 * Math.PI * ringR;
+  const ringOffset = ringCirc - (progressPercent / 100) * ringCirc;
 
   const C = {
     wrap: { minHeight: "100vh", background: "#0a0f0c", display: "flex", flexDirection: "column", maxWidth: 480, margin: "0 auto", position: "relative", overflow: "hidden" },
     scroll: { flex: 1, overflowY: "auto", position: "relative", zIndex: 2 },
-    gridwrap: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, margin: "0 16px 12px" },
-    gi: { borderRadius: 16, padding: "13px 14px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", position: "relative" },
-    fasalcard: { margin: "0 16px 12px", background: "#12241a", border: "1px solid rgba(120,220,150,0.15)", borderRadius: 18, padding: "16px 16px", position: "relative", overflow: "hidden" },
-    weathercard: { margin: "0 16px 12px", background: "#141b28", border: "1px solid rgba(100,160,255,0.15)", borderRadius: 16, padding: "12px 14px", cursor: "pointer" },
-    alertBox: { margin: "0 16px 12px", background: "rgba(255,50,50,0.12)", border: "1px solid rgba(255,50,50,0.25)", borderRadius: 12, padding: "9px 13px", fontSize: 11, color: "#ff9999" },
+    pill: { borderRadius: 14, padding: "10px 8px", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, cursor: "pointer" },
     streakCard: { margin: "0 16px 12px", background: "rgba(255,120,0,0.08)", border: "1px solid rgba(255,120,0,0.2)", borderRadius: 16, padding: "12px 14px" },
     mcwrap: { margin: "0 16px 12px", display: "flex", gap: 6 },
-    mc: { flex: 1, background: "#141814", border: "1px solid rgba(120,220,150,0.13)", borderRadius: 12, padding: "8px 9px", cursor: "pointer" },
-    lb: { margin: "0 16px 14px", background: "#141814", border: "1px solid rgba(120,220,150,0.13)", borderRadius: 16, padding: "12px 14px" },
-    bottomnav: { background: "rgba(6,10,8,0.97)", borderTop: "1px solid rgba(120,220,150,0.1)", padding: "9px 0 12px", display: "flex", justifyContent: "space-around", position: "relative", zIndex: 10 },
+    mc: { flex: 1, background: "#12241a", border: "1px solid rgba(120,220,150,0.13)", borderRadius: 12, padding: "8px 9px", cursor: "pointer" },
+    lb: { margin: "0 16px 14px", background: "#12241a", border: "1px solid rgba(120,220,150,0.13)", borderRadius: 16, padding: "12px 14px" },
+    alertBox: { margin: "0 16px 12px", background: "rgba(255,50,50,0.12)", border: "1px solid rgba(255,50,50,0.25)", borderRadius: 12, padding: "9px 13px", fontSize: 11, color: "#ff9999" },
+    bottomnav: { background: "rgba(6,10,8,0.97)", borderTop: "1px solid rgba(120,220,150,0.1)", padding: "9px 0 12px", display: "flex", justifyContent: "space-around", alignItems: "flex-end", position: "relative", zIndex: 10 },
   };
 
   return (
     <div style={C.wrap}>
-      {/* ===== HERO — animated sunset background photo ===== */}
       <div style={{ position: "relative", height: 300, overflow: "hidden", flexShrink: 0 }}>
         <div
           className="animated-bg"
@@ -117,112 +100,68 @@ export default function HomePage({
             cursor: "pointer"
           }}
         />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.1) 40%, #0a0f0c 96%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 45%, rgba(10,15,12,0.7) 80%, #0a0f0c 100%)" }} />
 
-        <div style={{ position: "relative", zIndex: 3, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 16px 0" }}>
+        <div style={{ position: "relative", zIndex: 3, display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "14px 16px 0" }}>
           <div>
-            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 19, fontWeight: 700, color: "#c9a1ff", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
-              AI Kisan Saathi 🌱
+            <div style={{ fontSize: 12, color: "rgba(255,255,255,0.85)", textShadow: "0 1px 4px rgba(0,0,0,0.6)" }}>
+              Namaste, {kisanNaam} 👋
             </div>
-            <div style={{ fontSize: 10.5, color: "rgba(255,255,255,0.85)", textShadow: "0 1px 4px rgba(0,0,0,0.6)", marginTop: 1 }}>
-              Aapka Digital Kheti Partner
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: 20, fontWeight: 700, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.6)" }}>
+              AI Kisan Saathi 🌱
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>🔔</div>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#f4c98a,#c9863f)", border: "2px solid rgba(255,255,255,0.5)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>👤</div>
+            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(0,0,0,0.35)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>🔔</div>
+            <div onClick={goProfile} style={{ cursor: "pointer", width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg,#f4c98a,#c9863f)", border: "2px solid rgba(255,255,255,0.6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>👤</div>
           </div>
         </div>
+
+        <motion.div onClick={goWeather} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+          style={{ position: "absolute", top: 62, right: 16, zIndex: 3, background: "rgba(10,15,12,0.55)", backdropFilter: "blur(6px)", borderRadius: 14, padding: "8px 12px", cursor: "pointer", minWidth: 96, textAlign: "right" }}>
+          {weather ? (<>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 5 }}>
+              <span style={{ fontSize: 16 }}>{getWeatherIcon(weather.id)}</span>
+              <span style={{ fontSize: 17, fontWeight: 700, color: "#fff" }}>{weather.temp}°C</span>
+            </div>
+            <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>{weather.description}</div>
+            <div style={{ fontSize: 8, color: "rgba(255,255,255,0.5)", marginTop: 1 }}>{weather.city}</div>
+          </>) : (
+            <div style={{ fontSize: 9, color: "rgba(255,255,255,0.6)" }}>🌤️ Load ho raha...</div>
+          )}
+        </motion.div>
+
+        <motion.div onClick={goAI} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+          style={{ position: "absolute", bottom: 14, left: 16, right: 16, zIndex: 3, background: "rgba(230,220,200,0.92)", borderRadius: 24, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+          <span style={{ flex: 1, fontSize: 11.5, color: "#6a5a48" }}>AI Chatbot se poochhe...</span>
+          <span style={{ fontSize: 15 }}>📷</span>
+          <span style={{ fontSize: 15 }}>🎤</span>
+        </motion.div>
       </div>
 
       <div style={C.scroll}>
-        {/* ===== Top status pills ===== */}
-        <div style={{ display: "flex", gap: 6, margin: "-8px 16px 12px", position: "relative", zIndex: 4 }}>
-          <span style={{ borderRadius: 20, padding: "3px 9px", fontSize: 10, fontWeight: 600, background: "rgba(196,181,253,0.15)", border: "1px solid rgba(196,181,253,0.3)", color: "#c9a1ff" }}>⭐ Level {Math.floor(points / 100) + 1}</span>
-          <span style={{ borderRadius: 20, padding: "3px 9px", fontSize: 10, fontWeight: 600, background: "rgba(255,150,60,0.15)", border: "1px solid rgba(255,150,60,0.3)", color: "#ffb066" }}>🔥 {streak} din</span>
-          <span style={{ borderRadius: 20, padding: "3px 9px", fontSize: 10, fontWeight: 600, background: "rgba(255,215,0,0.13)", border: "1px solid rgba(255,215,0,0.28)", color: "#ffd700" }}>{points} pts</span>
-        </div>
-
-        {/* ===== 4-color feature grid ===== */}
-        <div style={C.gridwrap}>
-          <motion.div style={{ ...C.gi, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.28)" }}
-            whileTap={{ scale: 0.96 }} onClick={goAI} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
-            <div style={{ fontSize: 22 }}>🤖</div>
-            <div><div style={{ fontSize: 11.5, color: "#fff", fontWeight: 700 }}>AI Chatbot</div><div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.5)" }}>Ask Anything</div></div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, margin: "12px 16px 12px" }}>
+          <motion.div style={{ ...C.pill, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)" }}
+            whileTap={{ scale: 0.94 }} onClick={goMandi} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+            <div style={{ fontSize: 18 }}>📈</div>
+            <div style={{ fontSize: 8.5, color: "#fff", fontWeight: 600 }}>Mandi Bhav</div>
           </motion.div>
-          <motion.div style={{ ...C.gi, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.28)" }}
-            whileTap={{ scale: 0.96 }} onClick={goMandi} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-            <div style={{ fontSize: 22 }}>📈</div>
-            <div><div style={{ fontSize: 11.5, color: "#fff", fontWeight: 700 }}>Mandi Bhav</div><div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.5)" }}>Live Price</div></div>
+          <motion.div style={{ ...C.pill, background: "rgba(230,150,60,0.1)", border: "1px solid rgba(230,150,60,0.25)" }}
+            whileTap={{ scale: 0.94 }} onClick={goYojna} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <div style={{ fontSize: 18 }}>📜</div>
+            <div style={{ fontSize: 8.5, color: "#fff", fontWeight: 600 }}>Yojnaayein</div>
           </motion.div>
-          <motion.div style={{ ...C.gi, background: "rgba(90,160,255,0.1)", border: "1px solid rgba(90,160,255,0.28)" }}
-            whileTap={{ scale: 0.96 }} onClick={goWeather} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-            <div style={{ fontSize: 22 }}>⛅</div>
-            <div><div style={{ fontSize: 11.5, color: "#fff", fontWeight: 700 }}>Mausam</div><div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.5)" }}>Live Weather</div></div>
+          <motion.div style={{ ...C.pill, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)" }}
+            whileTap={{ scale: 0.94 }} onClick={goCommunity} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+            <div style={{ fontSize: 18 }}>👥</div>
+            <div style={{ fontSize: 8.5, color: "#fff", fontWeight: 600 }}>Community</div>
           </motion.div>
-          <motion.div style={{ ...C.gi, background: "rgba(230,150,60,0.1)", border: "1px solid rgba(230,150,60,0.28)" }}
-            whileTap={{ scale: 0.96 }} onClick={goYojna} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <div style={{ fontSize: 22 }}>📜</div>
-            <div><div style={{ fontSize: 11.5, color: "#fff", fontWeight: 700 }}>Yojnaayein</div><div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.5)" }}>Schemes</div></div>
+          <motion.div style={{ ...C.pill, background: "rgba(90,160,255,0.1)", border: "1px solid rgba(90,160,255,0.25)" }}
+            whileTap={{ scale: 0.94 }} onClick={goWeather} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <div style={{ fontSize: 18 }}>⛅</div>
+            <div style={{ fontSize: 8.5, color: "#fff", fontWeight: 600 }}>Mausam</div>
           </motion.div>
         </div>
-
-        {/* ===== Fasal Tracking card ===== */}
-        <motion.div style={C.fasalcard} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} onClick={goBg}>
-          <div style={{ position: "absolute", right: -10, top: -6, width: 90, height: 90, backgroundImage: "url(/images/mandi-wheat.png)", backgroundSize: "contain", backgroundRepeat: "no-repeat", opacity: 0.85 }} />
-          <div style={{ fontSize: 14, color: "#fff", fontWeight: 700 }}>Fasal Tracking</div>
-          <div style={{ fontSize: 12, color: "#fff", fontWeight: 600, marginTop: 2 }}>{fasal}</div>
-          <div style={{ fontSize: 10, color: "#7fc99a", marginTop: 6, marginBottom: 8 }}>{stage}</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, maxWidth: "70%" }}>
-            <div style={{ flex: 1, height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 8, overflow: "hidden" }}>
-              <div style={{ height: "100%", background: "linear-gradient(90deg,#1eb464,#7dffaa)", width: `${progressPercent}%`, borderRadius: 8, transition: "width 1s ease" }} />
-            </div>
-            <div style={{ fontSize: 12, color: "#7dffaa", fontWeight: 700 }}>{Math.round(progressPercent)}%</div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, maxWidth: "80%" }}>
-            {stages.map((s, i) => (
-              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                <div style={{
-                  width: 8, height: 8, borderRadius: "50%",
-                  background: i < activeStageIdx ? "#1eb464" : i === activeStageIdx ? "#60b8ff" : "rgba(255,255,255,0.15)",
-                  border: i === activeStageIdx ? "2px solid #fff" : "none",
-                }} />
-                <div style={{ fontSize: 6.5, color: "rgba(255,255,255,0.4)" }}>{s}</div>
-              </div>
-            ))}
-          </div>
-          <div style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", marginTop: 8 }}>💡 {advice}</div>
-        </motion.div>
-
-        {/* ===== Weather card ===== */}
-        <motion.div style={C.weathercard} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} onClick={goWeather}>
-          {weather ? (<>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              <div style={{ fontSize: 26, fontWeight: 700, color: "#fff" }}>{getWeatherIcon(weather.id)} {weather.temp}°C</div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 10, color: "#7fa8ff" }}>📍 {weather.city}</div>
-                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>{weather.description}</div>
-              </div>
-            </div>
-            <div style={{ display: "flex", gap: 10, marginTop: 6, paddingTop: 6, borderTop: "1px solid rgba(100,160,255,0.1)" }}>
-              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.45)" }}>💧 {weather.humidity}%</span>
-              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.45)" }}>💨 {weather.wind} m/s</span>
-            </div>
-            {forecast.length > 0 && (
-              <div style={{ display: "flex", gap: 4, marginTop: 8 }}>
-                {forecast.map((f, i) => (
-                  <div key={i} style={{ flex: 1, background: "rgba(90,160,255,0.06)", border: "1px solid rgba(90,160,255,0.12)", borderRadius: 8, padding: "5px 2px", textAlign: "center" }}>
-                    <div style={{ fontSize: 8, color: "#7fa8ff" }}>{f.date}</div>
-                    <div style={{ fontSize: 14 }}>{getWeatherIcon(f.id)}</div>
-                    <div style={{ fontSize: 9.5, color: "#fff", fontWeight: 600 }}>{f.temp}°C</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>) : (
-            <div style={{ textAlign: "center", color: "rgba(100,160,255,0.5)", fontSize: 12 }}>🌤️ Mausam load ho raha hai...</div>
-          )}
-        </motion.div>
 
         {alert && (
           <motion.div style={C.alertBox} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -230,30 +169,32 @@ export default function HomePage({
           </motion.div>
         )}
 
-        {/* ===== Quiz + Khata + Community row ===== */}
-        <div style={{ margin: "0 16px 12px", display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-          <motion.div style={{ ...C.gi, background: "rgba(255,215,0,0.08)", border: "1px solid rgba(255,215,0,0.2)", flexDirection: "column", alignItems: "flex-start", gap: 3, padding: "11px 10px" }}
-            whileTap={{ scale: 0.96 }} onClick={goQuiz} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.32 }}>
-            <div style={{ fontSize: 16 }}>🎯</div>
-            <div style={{ fontSize: 10, color: "#fff", fontWeight: 700 }}>Quiz</div>
-            <div style={{ fontSize: 7.5, color: "#ffd966" }}>50 pts</div>
-          </motion.div>
-          <motion.div style={{ ...C.gi, background: "rgba(120,220,180,0.08)", border: "1px solid rgba(120,220,180,0.2)", flexDirection: "column", alignItems: "flex-start", gap: 3, padding: "11px 10px" }}
-            whileTap={{ scale: 0.96 }} onClick={goKhata} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.36 }}>
-            <div style={{ fontSize: 16 }}>📒</div>
-            <div style={{ fontSize: 10, color: "#fff", fontWeight: 700 }}>Khata</div>
-            <div style={{ fontSize: 7.5, color: "#7fd8a0" }}>Hisaab</div>
-          </motion.div>
-          <motion.div style={{ ...C.gi, background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)", flexDirection: "column", alignItems: "flex-start", gap: 3, padding: "11px 10px" }}
-            whileTap={{ scale: 0.96 }} onClick={goCommunity} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
-            <div style={{ fontSize: 16 }}>👥</div>
-            <div style={{ fontSize: 10, color: "#fff", fontWeight: 700 }}>Samuday</div>
-            <div style={{ fontSize: 7.5, color: "#c9a1ff" }}>Judo</div>
-          </motion.div>
-        </div>
+        <motion.div onClick={goBg} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
+          style={{ margin: "0 16px 12px", background: "#12241a", border: "1px solid rgba(120,220,150,0.15)", borderRadius: 18, padding: "14px 16px", position: "relative", overflow: "hidden", cursor: "pointer" }}>
+          <div style={{ position: "absolute", right: -8, bottom: -6, width: 92, height: 92, backgroundImage: "url(/images/mandi-wheat.png)", backgroundSize: "contain", backgroundRepeat: "no-repeat", backgroundPosition: "bottom right", opacity: 0.9 }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ fontSize: 9.5, color: "rgba(255,255,255,0.4)" }}>Aapki Fasal</div>
+              <div style={{ fontSize: 13.5, color: "#fff", fontWeight: 700, marginTop: 2 }}>{fasal}</div>
+              <div style={{ fontSize: 9, color: "#7fc99a", marginTop: 3 }}>{stage}</div>
+              <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.35)", marginTop: 2 }}>{Math.max(0, 120 - din)} Din Baaki</div>
+            </div>
+            <div style={{ position: "relative", width: 54, height: 54, flexShrink: 0 }}>
+              <svg width="54" height="54" viewBox="0 0 54 54">
+                <circle cx="27" cy="27" r={ringR} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="5" />
+                <circle cx="27" cy="27" r={ringR} fill="none" stroke="#1eb464" strokeWidth="5" strokeLinecap="round"
+                  strokeDasharray={ringCirc} strokeDashoffset={ringOffset} transform="rotate(-90 27 27)"
+                  style={{ transition: "stroke-dashoffset 1s ease" }} />
+              </svg>
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#7dffaa" }}>
+                {Math.round(progressPercent)}%
+              </div>
+            </div>
+          </div>
+          <div style={{ fontSize: 8.5, color: "rgba(255,255,255,0.4)", marginTop: 8, maxWidth: "62%" }}>💡 {advice}</div>
+        </motion.div>
 
-        {/* ===== Streak ===== */}
-        <motion.div style={C.streakCard} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}>
+        <motion.div style={C.streakCard} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
             <div style={{ fontSize: 11.5, fontWeight: 700, color: "#ffb066" }}>🔥 Daily Streak — {streak} din!</div>
             <div style={{ fontSize: 10, color: "#ffd700", fontWeight: 700 }}>+10 pts/din</div>
@@ -275,7 +216,21 @@ export default function HomePage({
           </div>
         </motion.div>
 
-        {/* ===== Mandi mini cards ===== */}
+        <div style={{ margin: "0 16px 12px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <motion.div onClick={goQuiz} whileTap={{ scale: 0.96 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
+            style={{ background: "rgba(255,215,0,0.08)", border: "1px solid rgba(255,215,0,0.2)", borderRadius: 14, padding: "11px 12px", cursor: "pointer" }}>
+            <div style={{ fontSize: 16 }}>🎯</div>
+            <div style={{ fontSize: 10.5, color: "#fff", fontWeight: 700, marginTop: 4 }}>Aaj ka Quiz</div>
+            <div style={{ fontSize: 8, color: "#ffd966" }}>5 sawaal · 50 pts</div>
+          </motion.div>
+          <motion.div onClick={goKhata} whileTap={{ scale: 0.96 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
+            style={{ background: "rgba(120,220,180,0.08)", border: "1px solid rgba(120,220,180,0.2)", borderRadius: 14, padding: "11px 12px", cursor: "pointer" }}>
+            <div style={{ fontSize: 16 }}>📒</div>
+            <div style={{ fontSize: 10.5, color: "#fff", fontWeight: 700, marginTop: 4 }}>Khata Dairy</div>
+            <div style={{ fontSize: 8, color: "#7fd8a0" }}>Hisaab kitaab</div>
+          </motion.div>
+        </div>
+
         {mandiData.length > 0 && (
           <div style={C.mcwrap}>
             {mandiData.map((m, i) => (
@@ -293,8 +248,7 @@ export default function HomePage({
           </div>
         )}
 
-        {/* ===== Leaderboard ===== */}
-        <motion.div style={C.lb} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}>
+        <motion.div style={C.lb} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }}>
           <div style={{ fontSize: 11.5, color: "#7dffaa", fontWeight: 700, marginBottom: 8 }}>🏆 Safidon Kisan Leaderboard</div>
           {[...leaderboard, { naam: kisanNaam + " (Tu)", points, isYou: true }]
             .sort((a, b) => b.points - a.points).slice(0, 4)
@@ -315,26 +269,31 @@ export default function HomePage({
         <div style={{ height: 10 }} />
       </div>
 
-      {/* ===== Bottom nav ===== */}
       <div style={C.bottomnav}>
-        {[
-          { icon: "🏠", label: "Home", key: "home" },
-          { icon: "💬", label: "Chat AI", key: "ai" },
-          { icon: "👥", label: "Community", key: "community" },
-          { icon: "👤", label: "Profile", key: "profile" },
-        ].map(n => (
-          <div key={n.key}
-            onClick={() => n.key === "community" ? goCommunity() : handleNavClick(n.key)}
-            style={{
-              display: "flex", flexDirection: "column", alignItems: "center",
-              gap: 3, fontSize: 9,
-              color: activeNav === n.key ? "#c9a1ff" : "rgba(255,255,255,0.3)",
-              cursor: "pointer"
-            }}>
-            <div style={{ fontSize: 19 }}>{n.icon}</div>
-            <span>{n.label}</span>
-          </div>
-        ))}
+        <div onClick={() => handleNavClick("home")}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontSize: 9, color: activeNav === "home" ? "#7dffaa" : "rgba(255,255,255,0.35)", cursor: "pointer" }}>
+          <div style={{ fontSize: 19 }}>🏠</div><span>Home</span>
+        </div>
+        <div onClick={() => handleNavClick("ai")}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontSize: 9, color: activeNav === "ai" ? "#7dffaa" : "rgba(255,255,255,0.35)", cursor: "pointer" }}>
+          <div style={{ fontSize: 19 }}>💬</div><span>Chat AI</span>
+        </div>
+        <div onClick={() => handleNavClick("center")} style={{ cursor: "pointer", marginTop: -18 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: "50%",
+            background: "radial-gradient(circle at 35% 30%, #4ade80, #16803c)",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
+            boxShadow: "0 0 16px 3px rgba(74,222,128,0.5)", border: "3px solid #0a0f0c"
+          }}>🌿</div>
+        </div>
+        <div onClick={() => handleNavClick("mandi")}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontSize: 9, color: activeNav === "mandi" ? "#7dffaa" : "rgba(255,255,255,0.35)", cursor: "pointer" }}>
+          <div style={{ fontSize: 19 }}>📊</div><span>Mandi</span>
+        </div>
+        <div onClick={() => handleNavClick("profile")}
+          style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontSize: 9, color: activeNav === "profile" ? "#7dffaa" : "rgba(255,255,255,0.35)", cursor: "pointer" }}>
+          <div style={{ fontSize: 19 }}>👤</div><span>Profile</span>
+        </div>
       </div>
     </div>
   );
