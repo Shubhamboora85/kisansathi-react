@@ -100,7 +100,7 @@ export default function HomePage({
             cursor: "pointer"
           }}
         />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.05) 45%, rgba(10,15,12,0.7) 80%, #0a0f0c 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.02) 40%, rgba(10,15,12,0.55) 82%, #0a0f0c 100%)" }} />
 
         <div style={{ position: "relative", zIndex: 3, display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "14px 16px 0" }}>
           <div>
@@ -140,26 +140,36 @@ export default function HomePage({
       </div>
 
       <div style={C.scroll}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, margin: "12px 16px 12px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, margin: "12px 16px 12px" }}>
           <motion.div style={{ ...C.pill, background: "rgba(34,197,94,0.1)", border: "1px solid rgba(34,197,94,0.25)" }}
             whileTap={{ scale: 0.94 }} onClick={goMandi} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <div style={{ fontSize: 18 }}>📈</div>
             <div style={{ fontSize: 8.5, color: "#fff", fontWeight: 600 }}>Mandi Bhav</div>
           </motion.div>
           <motion.div style={{ ...C.pill, background: "rgba(230,150,60,0.1)", border: "1px solid rgba(230,150,60,0.25)" }}
-            whileTap={{ scale: 0.94 }} onClick={goYojna} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            whileTap={{ scale: 0.94 }} onClick={goYojna} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
             <div style={{ fontSize: 18 }}>📜</div>
             <div style={{ fontSize: 8.5, color: "#fff", fontWeight: 600 }}>Yojnaayein</div>
           </motion.div>
           <motion.div style={{ ...C.pill, background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.25)" }}
-            whileTap={{ scale: 0.94 }} onClick={goCommunity} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+            whileTap={{ scale: 0.94 }} onClick={goCommunity} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}>
             <div style={{ fontSize: 18 }}>👥</div>
             <div style={{ fontSize: 8.5, color: "#fff", fontWeight: 600 }}>Community</div>
           </motion.div>
           <motion.div style={{ ...C.pill, background: "rgba(90,160,255,0.1)", border: "1px solid rgba(90,160,255,0.25)" }}
-            whileTap={{ scale: 0.94 }} onClick={goWeather} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            whileTap={{ scale: 0.94 }} onClick={goWeather} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}>
             <div style={{ fontSize: 18 }}>⛅</div>
             <div style={{ fontSize: 8.5, color: "#fff", fontWeight: 600 }}>Mausam</div>
+          </motion.div>
+          <motion.div style={{ ...C.pill, background: "rgba(255,215,0,0.1)", border: "1px solid rgba(255,215,0,0.25)" }}
+            whileTap={{ scale: 0.94 }} onClick={goQuiz} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.17 }}>
+            <div style={{ fontSize: 18 }}>🎯</div>
+            <div style={{ fontSize: 8.5, color: "#fff", fontWeight: 600 }}>Quiz</div>
+          </motion.div>
+          <motion.div style={{ ...C.pill, background: "rgba(120,220,180,0.1)", border: "1px solid rgba(120,220,180,0.25)" }}
+            whileTap={{ scale: 0.94 }} onClick={goKhata} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            <div style={{ fontSize: 18 }}>📒</div>
+            <div style={{ fontSize: 8.5, color: "#fff", fontWeight: 600 }}>Khata</div>
           </motion.div>
         </div>
 
@@ -216,21 +226,6 @@ export default function HomePage({
           </div>
         </motion.div>
 
-        <div style={{ margin: "0 16px 12px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-          <motion.div onClick={goQuiz} whileTap={{ scale: 0.96 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }}
-            style={{ background: "rgba(255,215,0,0.08)", border: "1px solid rgba(255,215,0,0.2)", borderRadius: 14, padding: "11px 12px", cursor: "pointer" }}>
-            <div style={{ fontSize: 16 }}>🎯</div>
-            <div style={{ fontSize: 10.5, color: "#fff", fontWeight: 700, marginTop: 4 }}>Aaj ka Quiz</div>
-            <div style={{ fontSize: 8, color: "#ffd966" }}>5 sawaal · 50 pts</div>
-          </motion.div>
-          <motion.div onClick={goKhata} whileTap={{ scale: 0.96 }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-            style={{ background: "rgba(120,220,180,0.08)", border: "1px solid rgba(120,220,180,0.2)", borderRadius: 14, padding: "11px 12px", cursor: "pointer" }}>
-            <div style={{ fontSize: 16 }}>📒</div>
-            <div style={{ fontSize: 10.5, color: "#fff", fontWeight: 700, marginTop: 4 }}>Khata Dairy</div>
-            <div style={{ fontSize: 8, color: "#7fd8a0" }}>Hisaab kitaab</div>
-          </motion.div>
-        </div>
-
         {mandiData.length > 0 && (
           <div style={C.mcwrap}>
             {mandiData.map((m, i) => (
@@ -272,11 +267,25 @@ export default function HomePage({
       <div style={C.bottomnav}>
         <div onClick={() => handleNavClick("home")}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontSize: 9, color: activeNav === "home" ? "#7dffaa" : "rgba(255,255,255,0.35)", cursor: "pointer" }}>
-          <div style={{ fontSize: 19 }}>🏠</div><span>Home</span>
+          <div style={{
+            fontSize: 19, width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center",
+            borderRadius: "50%",
+            background: activeNav === "home" ? "rgba(74,222,128,0.18)" : "transparent",
+            boxShadow: activeNav === "home" ? "0 0 12px 2px rgba(74,222,128,0.5)" : "none",
+            transition: "all 0.3s ease"
+          }}>🏠</div>
+          <span>Home</span>
         </div>
         <div onClick={() => handleNavClick("ai")}
           style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, fontSize: 9, color: activeNav === "ai" ? "#7dffaa" : "rgba(255,255,255,0.35)", cursor: "pointer" }}>
-          <div style={{ fontSize: 19 }}>💬</div><span>Chat AI</span>
+          <div style={{
+            fontSize: 19, width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center",
+            borderRadius: "50%",
+            background: activeNav === "ai" ? "rgba(74,222,128,0.18)" : "transparent",
+            boxShadow: activeNav === "ai" ? "0 0 12px 2px rgba(74,222,128,0.5)" : "none",
+            transition: "all 0.3s ease"
+          }}>💬</div>
+          <span>Chat AI</span>
         </div>
         <div onClick={() => handleNavClick("center")} style={{ cursor: "pointer", marginTop: -18 }}>
           <div style={{
