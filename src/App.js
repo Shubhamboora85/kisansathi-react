@@ -5,7 +5,7 @@ import ProfilePage from "./components/ProfilePage";
 import ChatPage from "./components/ChatPage";
 import CommunityPage from "./components/CommunityPage";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import HomePage from "./components/HomePage";
@@ -19,11 +19,13 @@ const firebaseConfig = {
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const [otp, setOtp] = useState("");
+const [confirmationResult, setConfirmationResult] = useState(null);
 
+// ===== FARM SVG BACKGROUND =====
 function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const hour = new Date().getHours();
   const getSky = () => {
@@ -33,7 +35,6 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
     if (hour >= 17 && hour < 20) return { top: "#8B2500", mid: "#c05621", bot: "#f6ad55" };
     return { top: "#020408", mid: "#080818", bot: "#0d1428" };
   };
-
   const sky = getSky();
   const ph = din <= 5 ? 0 : din <= 15 ? 12 : din <= 25 ? 22 : din <= 50 ? 42 : din <= 80 ? 62 : din <= 110 ? 76 : 70;
   const isGolden = din > 100;
@@ -50,7 +51,6 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
     const lf = h * 0.4;
     const dur = `${1.3 + (i % 7) * 0.25}s`;
     const vals = `0 ${x} ${baseY};${wa} ${x} ${baseY};${-wa * 0.3} ${x} ${baseY};${wa * 0.6} ${x} ${baseY};0 ${x} ${baseY}`;
-
     if (din <= 5) return <ellipse key={i} cx={x} cy={baseY + 1} rx="3" ry="1.8" fill="#c8a030" opacity="0.7" />;
     if (din <= 18) return (
       <g key={i}>
@@ -60,7 +60,6 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
         <path d={`M${x},${baseY - 11} C${x + 7},${baseY - 16} ${x + 11},${baseY - 13} ${x + 13},${baseY - 10}`} stroke="#3a8a3a" strokeWidth="1.3" fill="none" />
       </g>
     );
-
     return (
       <g key={i}>
         <animateTransform attributeName="transform" type="rotate" values={vals} dur={dur} repeatCount="indefinite" />
@@ -141,7 +140,9 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
       })}
       {isRain && [...Array(40)].map((_, i) => (
         <g key={i}>
-          <animateTransform attributeName="transform" type="translate" values={`${(i * 9.8) % 480} -15; ${((i * 9.8) + 20) % 480} 308`} dur={`${0.48 + (i%6)*0.065}s`} begin={`${(i%20)*0.065}s`} repeatCount="indefinite" />
+          <animateTransform attributeName="transform" type="translate"
+            values={`${(i * 9.8) % 480} -15; ${((i * 9.8) + 20) % 480} 308`}
+            dur={`${0.48 + (i%6)*0.065}s`} begin={`${(i%20)*0.065}s`} repeatCount="indefinite" />
           <line x1="0" y1="0" x2="-4" y2="14" stroke="rgba(160,210,255,0.7)" strokeWidth="1.2" />
         </g>
       ))}
@@ -149,6 +150,7 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   );
 }
 
+// ===== KHATA PAGE =====
 function KhataPage({ phone, onBack }) {
   const [entries, setEntries] = useState([]);
   const [category, setCategory] = useState("Dawaai");
@@ -191,17 +193,20 @@ function KhataPage({ phone, onBack }) {
         ))}
       </div>
       <div style={{ flex: 1, overflowY: "auto", padding: "8px 10px" }}>
-        {loading ? <div style={{ textAlign: "center", padding: 20, color: "#7dffaa" }}>⏳ Loading...</div> : entries.length === 0 ? <div style={{ textAlign: "center", padding: 30, color: "rgba(100,180,255,0.5)" }}>Abhi koi entry nahi hai</div> : entries.map(e => (
-          <div key={e.id} style={{ background: "rgba(100,180,255,0.07)", borderRadius: 12, padding: "10px 14px", margin: "6px 0", border: `1px solid ${e.type === "kharcha" ? "rgba(255,100,100,0.3)" : "rgba(100,255,150,0.3)"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <div style={{ fontWeight: "bold", color: "#fff", fontSize: 13 }}>{e.category}</div>
-              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{e.date}</div>
+        {loading ? <div style={{ textAlign: "center", padding: 20, color: "#7dffaa" }}>⏳ Loading...</div> :
+          entries.length === 0 ? <div style={{ textAlign: "center", padding: 30, color: "rgba(100,180,255,0.5)" }}>Abhi koi entry nahi hai</div> :
+          entries.map(e => (
+            <div key={e.id} style={{ background: "rgba(100,180,255,0.07)", borderRadius: 12, padding: "10px 14px", margin: "6px 0", border: `1px solid ${e.type === "kharcha" ? "rgba(255,100,100,0.3)" : "rgba(100,255,150,0.3)"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <div style={{ fontWeight: "bold", color: "#fff", fontSize: 13 }}>{e.category}</div>
+                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{e.date}</div>
+              </div>
+              <div style={{ fontWeight: "bold", fontSize: 15, color: e.type === "kharcha" ? "#ff6666" : "#7dffaa" }}>
+                {e.type === "kharcha" ? "-" : "+"}₹{e.amount.toLocaleString()}
+              </div>
             </div>
-            <div style={{ fontWeight: "bold", fontSize: 15, color: e.type === "kharcha" ? "#ff6666" : "#7dffaa" }}>
-              {e.type === "kharcha" ? "-" : "+"}₹{e.amount.toLocaleString()}
-            </div>
-          </div>
-        )) }
+          ))
+        }
       </div>
       <div style={{ background: "rgba(7,21,40,0.97)", borderTop: "1px solid rgba(100,180,255,0.12)", padding: 10 }}>
         <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
@@ -215,7 +220,9 @@ function KhataPage({ phone, onBack }) {
           {["Dawaai","Beej","Khad/Urea","Mazdoori","Tractor","Mandi se kamai","Bijli bill","Kuch aur"].map(c => <option key={c} style={{ background: "#071528" }}>{c}</option>)}
         </select>
         <div style={{ display: "flex", gap: 8 }}>
-          <input value={amount} onChange={e => setAmount(e.target.value.replace(/\D/g, ""))} placeholder="Amount ₹" type="number" style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.07)", color: "#fff", fontSize: 13, outline: "none" }} onKeyDown={e => e.key === "Enter" && addEntry()} />
+          <input value={amount} onChange={e => setAmount(e.target.value.replace(/\D/g, ""))} placeholder="Amount ₹" type="number"
+            style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.07)", color: "#fff", fontSize: 13, outline: "none" }}
+            onKeyDown={e => e.key === "Enter" && addEntry()} />
           <button onClick={addEntry} style={{ background: "#1e90ff", color: "white", border: "none", borderRadius: 10, padding: "9px 18px", fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>Add</button>
         </div>
       </div>
@@ -223,6 +230,7 @@ function KhataPage({ phone, onBack }) {
   );
 }
 
+// ===== MANDI PAGE =====
 function MandiBhavPage({ onBack }) {
   const [location, setLocation] = useState("");
   const [bhav, setBhav] = useState([]);
@@ -231,15 +239,12 @@ function MandiBhavPage({ onBack }) {
 
   const getMandiBhav = async () => {
     if (!location.trim()) return;
-    setLoading(true);
-    setSearched(true);
+    setLoading(true); setSearched(true);
     try {
       const res = await fetch(`https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${process.env.REACT_APP_MANDI_KEY}&format=json&filters[district]=${encodeURIComponent(location)}&limit=20`);
       const data = await res.json();
       setBhav(data.records && data.records.length > 0 ? data.records : []);
-    } catch {
-      setBhav([]);
-    }
+    } catch { setBhav([]); }
     setLoading(false);
   };
 
@@ -251,7 +256,9 @@ function MandiBhavPage({ onBack }) {
       </div>
       <div style={{ padding: "12px 10px" }}>
         <div style={{ display: "flex", gap: 8 }}>
-          <input value={location} onChange={e => setLocation(e.target.value)} placeholder="District likhein (jaise: Jind, Kaithal, Karnal)" style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.07)", color: "#fff", fontSize: 13, outline: "none" }} onKeyDown={e => e.key === "Enter" && getMandiBhav()} />
+          <input value={location} onChange={e => setLocation(e.target.value)} placeholder="District likhein (jaise: Jind, Kaithal, Karnal)"
+            style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.07)", color: "#fff", fontSize: 13, outline: "none" }}
+            onKeyDown={e => e.key === "Enter" && getMandiBhav()} />
           <button onClick={getMandiBhav} style={{ background: "#1e90ff", color: "white", border: "none", borderRadius: 10, padding: "10px 16px", fontWeight: "bold", cursor: "pointer" }}>🔍</button>
         </div>
         <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
@@ -285,12 +292,12 @@ function MandiBhavPage({ onBack }) {
   );
 }
 
+// ===== MAIN APP =====
 function App() {
   const [screen, setScreen] = useState("splash");
   const [page, setPage] = useState("main");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [confirmationResult, setConfirmationResult] = useState(null);
+  const [isNewUser, setIsNewUser] = useState(false);
   const [kisanNaam, setKisanNaam] = useState("");
   const [shehar, setShehar] = useState("");
   const [sheharSuggestions, setSheharSuggestions] = useState([]);
@@ -306,6 +313,7 @@ function App() {
   const [userPoints, setUserPoints] = useState(0);
   const [userStreak, setUserStreak] = useState(0);
 
+  // ===== BACK BUTTON HANDLER =====
   useEffect(() => {
     const handleBackButton = () => {
       if (page !== "main") {
@@ -324,218 +332,451 @@ function App() {
     return () => window.removeEventListener("popstate", handleBackButton);
   }, [page, screen]);
 
+  // ===== AUTO LOGIN =====
   useEffect(() => {
-    const savedPhone = localStorage.getItem("kisan_phone");
-    if (savedPhone) {
-      setPhone(savedPhone);
-      setDbLoading(true);
-      getDoc(doc(db, "kisans", savedPhone)).then(snap => {
-        if (snap.exists()) {
-          const data = snap.data();
-          setKisanNaam(data.naam || "");
-          setShehar(data.shehar || "");
-          setFasal(data.fasal || "");
-          setBeejDate(data.beejDate || "");
-          setMessages([]);
-          setUserPoints(data.points || 0);
-          setUserStreak(data.streak || 0);
-          if (data.fasal && data.beejDate) setScreen("main");
-          else setScreen("fasal");
-        }
-        setDbLoading(false);
-      }).catch(() => setDbLoading(false));
-    } else {
-      setTimeout(() => setScreen("phone"), 2500);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (phone && screen === "main") {
-      setupNotifications(app, db, phone);
-    }
-  }, [phone, screen]);
-
-  useEffect(() => {
-    if (shehar && screen === "main") {
-      const city = shehar.split(",")[0].trim();
-      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city},IN&appid=${process.env.REACT_APP_WEATHER_KEY}&units=metric&lang=hi`)
-        .then(r => r.json()).then(data => {
-          if (data?.main) setWeather({ temp: Math.round(data.main.temp), text: data.weather[0].description, icon: data.weather[0].icon, wind: data.wind.speed, humidity: data.main.humidity });
-        }).catch(() => {});
-      fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city},IN&appid=${process.env.REACT_APP_WEATHER_KEY}&units=metric&lang=hi`)
-        .then(r => r.json()).then(data => {
-          if (data?.list) {
-            const daily = data.list.filter((_, i) => i % 8 === 0).slice(0, 4).map(item => ({ day: new Date(item.dt_txt).toLocaleDateString("hi-IN", { weekday: "short" }), temp: Math.round(item.main.temp), icon: item.weather[0].icon }));
-            setForecast(daily);
-          }
-        }).catch(() => {});
-    }
-  }, [shehar, screen]);
-
-  const sendOTP = async () => {
-    if (!phone || phone.length < 10) return setError("Sahi phone number dalein");
-    setError("");
-    setLoading(true);
-    try {
-      if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
-      }
-      const formattedPhone = phone.startsWith("+91") ? phone : `+91${phone}`;
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, window.recaptchaVerifier);
-      setConfirmationResult(confirmation);
-      setScreen("otp");
-    } catch (err) {
-      setError("OTP bhejne me dikkat aayi. Koshish karein.");
-    }
-    setLoading(false);
-  };
-
-  const verifyOTP = async () => {
-    if (!otp || otp.length < 6) return setError("6-digit OTP dalein");
-    setError("");
-    setLoading(true);
-    try {
-      await confirmationResult.confirm(otp);
-      localStorage.setItem("kisan_phone", phone);
-      setDbLoading(true);
-      const snap = await getDoc(doc(db, "kisans", phone));
+  const savedPhone = localStorage.getItem("kisan_phone");
+  if (savedPhone) {
+    setPhone(savedPhone); setDbLoading(true);
+    getDoc(doc(db, "kisans", savedPhone)).then(snap => {
       if (snap.exists()) {
         const data = snap.data();
         setKisanNaam(data.naam || "");
         setShehar(data.shehar || "");
         setFasal(data.fasal || "");
         setBeejDate(data.beejDate || "");
+        setMessages([]);
         setUserPoints(data.points || 0);
         setUserStreak(data.streak || 0);
         if (data.fasal && data.beejDate) setScreen("main");
-        else setScreen("profile_setup");
-      } else {
-        setScreen("profile_setup");
+        else setScreen("fasal");
       }
-    } catch (err) {
-      setError("Galat OTP, phir se check karein");
+      setDbLoading(false);
+    }).catch(() => setDbLoading(false));
+  } else {
+    setTimeout(() => setScreen("phone"), 2500);
+  }
+}, []);
+
+  // ===== NOTIFICATIONS SETUP =====
+  useEffect(() => {
+    if (phone && screen === "main") {
+      setupNotifications(app, db, phone);
     }
-    setLoading(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone, screen]);
+
+  // ===== WEATHER =====
+  useEffect(() => {
+    if (shehar && screen === "main") {
+      const city = shehar.split(",")[0].trim();
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city},IN&appid=${process.env.REACT_APP_WEATHER_KEY}&units=metric&lang=hi`)
+        .then(r => r.json()).then(data => {
+          if (data?.main) setWeather({ temp: Math.round(data.main.temp), humidity: data.main.humidity, description: data.weather[0].description, id: data.weather[0].id, wind: Math.round(data.wind.speed), city: data.name });
+        }).catch(() => {});
+      fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city},IN&appid=${process.env.REACT_APP_WEATHER_KEY}&units=metric&lang=hi`)
+  .then(r => r.json()).then(data => {
+    if (data?.list) {
+      const today = new Date().toDateString();
+      const seenDates = new Set([today]);
+      const dailyForecasts = [];
+
+      for (const d of data.list) {
+        const entryDate = new Date(d.dt * 1000);
+        const dateStr = entryDate.toDateString();
+        const hour = entryDate.getHours();
+
+        // Sirf naye dino ka data lo, aur dopahar ke aaspaas ka time prefer karo (12-15 ke beech)
+        if (!seenDates.has(dateStr) && (hour >= 11 && hour <= 15)) {
+          seenDates.add(dateStr);
+          dailyForecasts.push({
+            date: entryDate.toLocaleDateString("hi-IN", { weekday: "short", day: "numeric" }),
+            temp: Math.round(d.main.temp),
+            desc: d.weather[0].description,
+            id: d.weather[0].id
+          });
+        }
+        if (dailyForecasts.length === 3) break;
+      }
+      setForecast(dailyForecasts);
+    }
+  }).catch(() => {});
+    }
+  }, [shehar, screen]);
+
+  const fetchSuggestions = async (val) => {
+    if (val.length < 2) { setSheharSuggestions([]); return; }
+    try {
+      const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${val},IN&limit=5&appid=${process.env.REACT_APP_WEATHER_KEY}`);
+      const data = await res.json();
+      if (Array.isArray(data)) setSheharSuggestions([...new Set(data.map(d => `${d.name}${d.state ? ", " + d.state : ""}`))]);
+    } catch { setSheharSuggestions([]); }
+  };
+
+  const handlePhoneSubmit = async () => {
+  setError("");
+  if (phone.length !== 10) { setError("10 digit number daalo!"); return; }
+  setDbLoading(true);
+  try {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
+    }
+    const result = await signInWithPhoneNumber(auth, "+91" + phone, window.recaptchaVerifier);
+    setConfirmationResult(result);
+    setScreen("otp");
+  } catch (e) {
+    setError("OTP bhejne mein dikkat aayi, dobara try karo!");
+  }
+  setDbLoading(false);
+};
+
+const handleOtpSubmit = async () => {
+  setError("");
+  if (otp.length !== 6) { setError("6 digit OTP daalo!"); return; }
+  setDbLoading(true);
+  try {
+    await confirmationResult.confirm(otp);
+    localStorage.setItem("kisan_phone", phone);
+    const snap = await getDoc(doc(db, "kisans", phone));
+    if (snap.exists()) {
+      const data = snap.data();
+      setKisanNaam(data.naam || "");
+      setShehar(data.shehar || "");
+      setFasal(data.fasal || "");
+      setBeejDate(data.beejDate || "");
+      setUserPoints(data.points || 0);
+      setUserStreak(data.streak || 0);
+      if (data.fasal && data.beejDate) setScreen("main");
+      else setScreen("fasal");
+    } else {
+      await setDoc(doc(db, "kisans", phone), { phone, naam: "", shehar: "", fasal: "", beejDate: "", points: 0, streak: 0 });
+      setScreen("fasal");
+    }
+  } catch {
+    setError("Galat OTP! Dobara try karo");
+  }
+  setDbLoading(false);
+};
+
+  const handlePinSubmit = async () => {
+    setError("");
+    if (pin.length !== 4) { setError("4 digit PIN daalo!"); return; }
+    setDbLoading(true);
+    try {
+      if (isNewUser) {
+        if (pin !== pinConfirm) { setError("PIN match nahi hua!"); setDbLoading(false); return; }
+        await setDoc(doc(db, "kisans", phone), { phone, pin, naam: "", shehar: "", fasal: "", beejDate: "", messages: [], khata: [], points: 0, streak: 0 });
+        setScreen("naam");
+      } else {
+        const snap = await getDoc(doc(db, "kisans", phone));
+        if (snap.data()?.pin !== pin) { setError("Galat PIN!"); setDbLoading(false); return; }
+        localStorage.setItem("kisan_phone", phone);
+        localStorage.setItem("kisan_pin", pin);
+        if (fasal && beejDate) setScreen("main");
+        else setScreen("naam");
+      }
+    } catch { setError("Kuch gadbad hui!"); }
     setDbLoading(false);
   };
 
-  const saveProfile = async () => {
-    if (!kisanNaam.trim() || !shehar.trim()) return setError("Naam aur Shehar zaroori hain");
-    setLoading(true);
+  const saveData = async (extra = {}) => {
+    if (!phone) return;
+    try { await setDoc(doc(db, "kisans", phone), { phone, pin, naam: kisanNaam, shehar, fasal, beejDate, ...extra }, { merge: true }); }
+    catch (e) { console.log(e); }
+  };
+
+  const din = beejDate ? Math.floor((new Date() - new Date(beejDate)) / (1000 * 60 * 60 * 24)) : 0;
+
+  const getStage = () => {
+    if (fasal === "🌾 Chawal (Rice)") {
+      if (din <= 25) return { stage: "🌱 Nursery Stage", advice: "Roz paani do. Peele patte dikhein to Zinc Sulphate spray karo" };
+      if (din <= 50) return { stage: "🌿 Transplanting Stage", advice: "Khet mein 2-3 inch paani rakho" };
+      if (din <= 80) return { stage: "🌾 Growth Stage", advice: "Pehli Urea — zameen ka size batao" };
+      if (din <= 110) return { stage: "🌸 Flowering Stage", advice: "Paani mat rokna — bahut zaroori hai" };
+      return { stage: "✂️ Harvesting Stage", advice: "Fasal taiyaar — paani band karo" };
+    }
+    if (fasal === "🌿 Gehun (Wheat)") {
+      if (din <= 21) return { stage: "🌱 Jamav Stage", advice: "Pehla paani do" };
+      if (din <= 45) return { stage: "🌿 Tillering Stage", advice: "Urea — zameen ka size batao" };
+      if (din <= 75) return { stage: "🌾 Growth Stage", advice: "Doosra paani do aur potash daalo" };
+      if (din <= 110) return { stage: "🌸 Bali Stage", advice: "Teesra paani do" };
+      return { stage: "✂️ Harvesting Stage", advice: "Gehun taiyaar" };
+    }
+    if (fasal === "🟡 Sarso (Mustard)") {
+      if (din <= 20) return { stage: "🌱 Jamav Stage", advice: "Halka paani do" };
+      if (din <= 45) return { stage: "🌿 Growth Stage", advice: "Urea aur keeton ki dawai" };
+      if (din <= 75) return { stage: "🌸 Phool Stage", advice: "Koi spray mat karo" };
+      return { stage: "✂️ Harvesting Stage", advice: "Sarso katne ka samay!" };
+    }
+    if (fasal === "🍬 Ganna (Sugarcane)") {
+      if (din <= 30) return { stage: "🌱 Jamav Stage", advice: "Halka paani do" };
+      if (din <= 90) return { stage: "🌿 Growth Stage", advice: "Urea — zameen ka size batao" };
+      if (din <= 180) return { stage: "🎋 Bhadai Stage", advice: "Potash daalo" };
+      if (din <= 270) return { stage: "🍬 Ripening Stage", advice: "Paani kam karo" };
+      return { stage: "✂️ Harvesting Stage", advice: "Mill se contact karo" };
+    }
+    return { stage: "Stage pata nahi", advice: "Sahi fasal chunein" };
+  };
+
+  const { stage, advice } = getStage();
+
+  const getWeatherIcon = (id) => {
+    if (!id) return "🌤️";
+    if (id < 300) return "⛈️"; if (id < 500) return "🌦️"; if (id < 600) return "🌧️";
+    if (id < 700) return "❄️"; if (id < 800) return "🌫️"; if (id === 800) return "☀️"; return "⛅";
+  };
+
+  const getWeatherAlert = () => {
+    if (!weather) return null;
+    if (weather.id >= 200 && weather.id < 600) {
+      if (stage.includes("Harvesting")) return "🚨 Baarish aa rahi hai! Aaj hi fasal kaatne ki koshish karein!";
+      if (stage.includes("Flowering")) return "⚠️ Baarish mein fungicide spray band karein!";
+      return "💧 Baarish ho rahi hai — aaj paani mat do!";
+    }
+    if (weather.temp > 42) return "🌡️ Bahut garmi — subah ya shaam paani do, dopahar nahi!";
+    if (weather.wind > 10) return "💨 Tej hawa — aaj spray karna rokein!";
+    return null;
+  };
+
+  const hour = new Date().getHours();
+  const isNight = hour < 6 || hour > 19;
+  const isRain = weather && weather.id >= 200 && weather.id < 600;
+  const windSpeed = weather?.wind || 0;
+  const alert = getWeatherAlert();
+
+  const sendMessage = async (text) => {
+    if (!text || typeof text !== "string" || !text.trim()) return;
+    const newMsgs = [...messages, { role: "user", content: text }];
+    setMessages(newMsgs); setLoading(true);
     try {
-      await setDoc(doc(db, "kisans", phone), { naam: kisanNaam, shehar, points: userPoints, streak: userStreak }, { merge: true });
-      setScreen("fasal");
-    } catch (err) {
-      setError("Save karne me dikkat aayi.");
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile", max_tokens: 200,
+          messages: [
+            { role: "system", content: `Tu ek experienced Indian agriculture expert hai. Kisan ka naam: ${kisanNaam || "Kisan"}, Fasal: ${fasal}, Stage: ${stage}, Din: ${din}. Mausam: ${weather ? `${weather.temp}°C, ${weather.description}` : "N/A"}.
+
+${getFullKnowledgeBase()}
+
+Rules: Hindi mein, 2-3 lines mein, aasan bhasha, zameen ka size poochhe bina matra mat batao. Upar diye gaye local terms aur units ka istemal samajhne ke liye karo.` },
+            ...newMsgs.slice(-10)
+          ]
+        })
+      });
+      if (!res.ok) throw new Error("API Error");
+      const data = await res.json();
+      const jawab = data?.choices?.[0]?.message?.content;
+      if (!jawab) throw new Error("No response");
+      const updated = [...newMsgs, { role: "assistant", content: jawab }];
+      setMessages(updated);
+    } catch {
+      setMessages([...newMsgs, { role: "assistant", content: "Kuch dikkat aayi — dobara try karo!" }]);
     }
     setLoading(false);
   };
 
-  const saveFasalData = async () => {
-    if (!fasal || !beejDate) return setError("Donon details bharein");
-    setLoading(true);
-    try {
-      await setDoc(doc(db, "kisans", phone), { fasal, beejDate }, { merge: true });
-      setScreen("main");
-    } catch (err) {
-      setError("Data save nahi ho paya.");
+  const sendImageMessage = async (base64Image, userQuestion = "") => {
+  const newMsgs = [...messages, { role: "user", content: userQuestion || "Photo bheji", image: base64Image }];
+  setMessages(newMsgs);
+  setLoading(true);
+  try {
+    const promptText = userQuestion
+      ? `Tu ek experienced Indian agriculture expert hai. Is photo ko dekho — yeh fasal, patta, keeda, ya dawai/khad ki packet kuch bhi ho sakti hai. User ka sawaal hai: "${userQuestion}". Photo ke context mein iska jawab do — Hindi mein, 3-4 lines mein, aasan bhasha mein.`
+      : `Tu ek experienced Indian agriculture expert hai. Is photo ko pehle pehchano ki yeh kya hai:
+1) Agar yeh FASAL/PATTA hai — bimari ya nutrient deficiency batao, kaaran batao, treatment batao.
+2) Agar yeh DAWAI/KHAD ki packet/bottle hai — uska naam, active ingredient, kis cheez ke liye use hoti hai, aur sahi matra/dosage batao per acre.
+3) Agar dono mein se kuch nahi samajh aaye, to bolo dobara saaf photo bhejo.
+Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
+
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
+      body: JSON.stringify({
+        model: "meta-llama/llama-4-maverick-17b-128e-instruct",
+        max_tokens: 350,
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: promptText },
+              { type: "image_url", image_url: { url: base64Image } }
+            ]
+          }
+        ]
+      })
+    });
+    if (!res.ok) throw new Error("API Error");
+    const data = await res.json();
+    const jawab = data?.choices?.[0]?.message?.content;
+    if (!jawab) throw new Error("No response");
+    const updated = [...newMsgs, { role: "assistant", content: jawab }];
+    setMessages(updated);
+  } catch {
+    setMessages([...newMsgs, { role: "assistant", content: "Photo samajhne mein dikkat aayi — dobara saaf photo bhejo!" }]);
+  }
+  setLoading(false);
+};
+
+  const handleOpenChat = (initMsg = "") => {
+    setPage("chat");
+    if (initMsg && typeof initMsg === "string" && initMsg.trim()) {
+      setTimeout(() => sendMessage(initMsg), 300);
     }
-    setLoading(false);
   };
 
   const handleLogout = () => {
-    if (window.confirm("Kya aap sach me logout karna chahte hain?")) {
-      localStorage.clear();
-      setPhone("");
-      setOtp("");
-      setConfirmationResult(null);
-      setKisanNaam("");
-      setShehar("");
-      setFasal("");
-      setBeejDate("");
-      setPage("main");
-      setScreen("phone");
-    }
+    localStorage.removeItem("kisan_phone");
+    localStorage.removeItem("kisan_pin");
+    setScreen("phone"); setPhone(""); setPin(""); setKisanNaam("");
+    setShehar(""); setFasal(""); setBeejDate(""); setMessages([]);
+    setUserPoints(0); setUserStreak(0); setPage("main");
   };
 
-  const getDaysCount = () => {
-    if (!beejDate) return 0;
-    const diff = Date.now() - new Date(beejDate).getTime();
-    return Math.max(0, Math.floor(diff / (1000 * 60 * 60 * 24)));
-  };
+ 
+  const authStyle = { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#0a0f0c", padding: 20, textAlign: "center" };
+  const inputStyle = { width: "85%", padding: "11px 15px", borderRadius: 10, border: "1px solid rgba(120,220,150,0.25)", background: "rgba(120,220,150,0.07)", color: "#fff", fontSize: 14, margin: "7px 0", outline: "none" };
+  const btnStyle = { background: "#1eb464", color: "white", border: "none", borderRadius: 10, padding: "11px 28px", fontSize: 15, fontWeight: "bold", cursor: "pointer", marginTop: 10, width: "85%" };
 
-  if (screen === "splash") return (
-    <div className="splash-screen" style={{ height: "100vh", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", background: "#020813", color: "#fff" }}>
-      <motion.div initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1 }}>
-        <h1 style={{ color: "#7dffaa", fontSize: "36px", marginBottom: "10px" }}>🌾 Krishi AI</h1>
-      </motion.div>
-      <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "14px" }}>Kisan ka sacha sathi</p>
-    </div>
+  // ===== PAGE ROUTING =====
+  if (page === "chat") return <ChatPage messages={messages} loading={loading} onSend={sendMessage} onSendImage={sendImageMessage} onBack={() => setPage("main")} kisanNaam={kisanNaam || "Kisan"} />;
+  if (page === "khata") return <KhataPage phone={phone} onBack={() => setPage("main")} />;
+  if (page === "mandi") return <MandiBhavPage onBack={() => setPage("main")} />;
+  if (page === "quiz") return <QuizPage onBack={() => setPage("main")} db={db} phone={phone} kisanNaam={kisanNaam || "Kisan"} fasal={fasal} />;
+  if (page === "yojna") return <YojnaPage onBack={() => setPage("main")} />;
+  if (page === "weather") return <WeatherPage onBack={() => setPage("main")} weather={weather} forecast={forecast} getWeatherIcon={getWeatherIcon} shehar={shehar} />;
+  if (page === "profile") return <ProfilePage onBack={() => setPage("main")} kisanNaam={kisanNaam || "Kisan"} phone={phone} shehar={shehar} fasal={fasal} beejDate={beejDate} points={userPoints} streak={userStreak} onLogout={handleLogout} onChangeFasal={() => { setPage("main"); setScreen("fasal"); }} />;
+  if (page === "community") return <CommunityPage onBack={() => setPage("main")} db={db} kisanNaam={kisanNaam || "Kisan"} phone={phone} />;
+
+  // ===== SPLASH =====
+  if (screen === "splash" || (dbLoading && !kisanNaam)) return (
+    <motion.div style={authStyle} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
+      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} transition={{ delay: 0.3, type: "spring" }} style={{ fontSize: 80 }}>🌾</motion.div>
+      <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} style={{ color: "#7dffaa" }}>Kisan Saathi</motion.h1>
+      <motion.h3 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} style={{ color: "rgba(255,255,255,0.7)" }}>Hanuman Khad Bhandar</motion.h3>
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} style={{ color: "rgba(100,180,255,0.6)" }}>Vill. Hatt (Safidon), Jind</motion.p>
+      <div style={{ width: 200, height: 3, background: "rgba(100,180,255,0.1)", borderRadius: 2, margin: "15px auto 0" }}>
+        <motion.div style={{ height: 3, background: "#1e90ff", borderRadius: 2 }} initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ delay: 1.1, duration: 1.2 }} />
+      </div>
+    </motion.div>
   );
 
-  if (screen === "phone" || screen === "otp" || screen === "profile_setup" || screen === "fasal") return (
-    <div style={{ minHeight: "100vh", background: "#050d1a", display: "flex", justifyContent: "center", alignItems: "center", padding: 20, color: "#fff" }}>
-      <div style={{ background: "#071528", padding: 24, borderRadius: 16, width: "100%", maxWidth: 360, border: "1px solid rgba(100,180,255,0.15)" }}>
-        {screen === "phone" && <>
-          <h2 style={{ color: "#7dffaa", marginBottom: 8 }}>Swagat Hai! 🌾</h2>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, marginBottom: 20 }}>Apna 10-digit mobile number dalein</p>
-          <input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="Mobile Number" type="tel" style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.05)", color: "#fff", marginBottom: 16, fontSize: 15, outline: "none" }} />
-          <div id="recaptcha-container"></div>
-          {error && <p style={{ color: "#ff6666", fontSize: 12, marginBottom: 10 }}>{error}</p>}
-          <button onClick={sendOTP} disabled={loading} style={{ width: "100%", padding: 12, borderRadius: 10, background: "#1e90ff", color: "white", border: "none", fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>{loading ? "Bhej raha hoon..." : "OTP Bhejein"}</button>
-        </>}
-        {screen === "otp" && <>
-          <h2 style={{ color: "#7dffaa", marginBottom: 8 }}>OTP Verification</h2>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, marginBottom: 20 }}>{phone} par bheja gaya code dalein</p>
-          <input value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="6-digit OTP" type="tel" style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.05)", color: "#fff", marginBottom: 16, textAlign: "center", fontSize: 18, letterSpacing: 4, outline: "none" }} />
-          {error && <p style={{ color: "#ff6666", fontSize: 12, marginBottom: 10 }}>{error}</p>}
-          <button onClick={verifyOTP} disabled={loading} style={{ width: "100%", padding: 12, borderRadius: 10, background: "#2d8a2d", color: "white", border: "none", fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>{loading ? "Verify kar raha hoon..." : "Verify & Log In"}</button>
-        </>}
-        {screen === "profile_setup" && <>
-          <h2 style={{ color: "#7dffaa", marginBottom: 8 }}>Profile Banayein</h2>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, marginBottom: 16 }}>Apni jankari bharein</p>
-          <input value={kisanNaam} onChange={e => setKisanNaam(e.target.value)} placeholder="Aapka Naam" style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.05)", color: "#fff", marginBottom: 12, outline: "none" }} />
-          <input value={shehar} onChange={e => setShehar(e.target.value)} placeholder="District/Zila" style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.05)", color: "#fff", marginBottom: 16, outline: "none" }} />
-          {error && <p style={{ color: "#ff6666", fontSize: 12, marginBottom: 10 }}>{error}</p>}
-          <button onClick={saveProfile} disabled={loading} style={{ width: "100%", padding: 12, borderRadius: 10, background: "#1e90ff", color: "white", border: "none", fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>Aage Badhein</button>
-        </>}
-        {screen === "fasal" && <>
-          <h2 style={{ color: "#7dffaa", marginBottom: 8 }}>Fasal ki Jankari</h2>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, marginBottom: 16 }}>Apni fasal aur bijai ki tareekh chunein</p>
-          <select value={fasal} onChange={e => setFasal(e.target.value)} style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "#071528", color: "#fff", marginBottom: 12, outline: "none" }}>
-            <option value="">Fasal Chunein</option>
-            <option value="🌾 Chawal (Rice)">🌾 Chawal (Rice)</option>
-            <option value="🌾 Gehun (Wheat)">🌾 Gehun (Wheat)</option>
-            <option value="🌱 Kapaas (Cotton)">🌱 Kapaas (Cotton)</option>
-            <option value="🌱 Ganna (Sugarcane)">🌱 Ganna (Sugarcane)</option>
-          </select>
-          <input type="date" value={beejDate} onChange={e => setBeejDate(e.target.value)} style={{ width: "100%", padding: 12, borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.05)", color: "#fff", marginBottom: 16, outline: "none" }} />
-          {error && <p style={{ color: "#ff6666", fontSize: 12, marginBottom: 10 }}>{error}</p>}
-          <button onClick={saveFasalData} disabled={loading} style={{ width: "100%", padding: 12, borderRadius: 10, background: "#2d8a2d", color: "white", border: "none", fontWeight: "bold", fontSize: 15, cursor: "pointer" }}>App Shuru Karein</button>
-        </>}
+  // ===== PHONE =====
+  if (screen === "phone") return (
+    <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
+      <div style={{ fontSize: 60 }}>📱</div>
+      <h2 style={{ color: "#7dffaa" }}>Namaste!</h2>
+      <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14 }}>Apna mobile number daalo</p>
+      <input style={inputStyle} placeholder="10 digit mobile number" value={phone} maxLength={10} type="tel"
+        onChange={e => setPhone(e.target.value.replace(/\D/g, ""))} onKeyDown={e => e.key === "Enter" && handlePhoneSubmit()} />
+      {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
+      {dbLoading ? <div style={{ color: "#7dffaa", marginTop: 12 }}>⏳ Loading...</div> :
+        <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={handlePhoneSubmit}>✅ Aage Badho</motion.button>}
+      <div id="recaptcha-container"></div>
+    </motion.div>
+  );
+
+  if (screen === "otp") return (
+  <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
+    <div style={{ fontSize: 50 }}>🔐</div>
+    <h3 style={{ color: "#7dffaa" }}>OTP Daalein</h3>
+    <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>+91{phone} par bheja gaya hai</p>
+    <input style={inputStyle} placeholder="6 digit OTP" value={otp} maxLength={6} type="tel"
+      onChange={e => setOtp(e.target.value.replace(/\D/g, ""))} onKeyDown={e => e.key === "Enter" && handleOtpSubmit()} />
+    {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
+    {dbLoading ? <div style={{ color: "#7dffaa" }}>⏳ Verify ho raha hai...</div> :
+      <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={handleOtpSubmit}>✅ Verify Karo</motion.button>}
+    <button onClick={() => { setScreen("phone"); setOtp(""); setError(""); }}
+      style={{ background: "none", border: "none", color: "#7dffaa", marginTop: 10, cursor: "pointer", fontSize: 13 }}>← Number Badlein</button>
+  </motion.div>
+);
+
+
+  // ===== FASAL =====
+  if (screen === "fasal") return (
+  <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
+    <div style={{ fontSize: 50 }}>🌾</div>
+    <h3 style={{ color: "#7dffaa" }}>Namaste!</h3>
+    <input style={inputStyle} placeholder="Apna naam likhein (optional)" value={kisanNaam || "Kisan"} onChange={e => setKisanNaam(e.target.value)} />
+    <select style={{ ...inputStyle, appearance: "none" }} value={fasal} onChange={e => setFasal(e.target.value)}>
+      <option value="" style={{ background: "#0a0f0c" }}>-- Fasal chunein --</option>
+      {["🌾 Chawal (Rice)","🌿 Gehun (Wheat)","🟡 Sarso (Mustard)","🍬 Ganna (Sugarcane)"].map(f => <option key={f} style={{ background: "#0a0f0c" }}>{f}</option>)}
+    </select>
+    <input style={inputStyle} type="date" value={beejDate} max={new Date().toISOString().split("T")[0]} onChange={e => setBeejDate(e.target.value)} />
+    {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
+    <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={async () => {
+      if (!fasal || !beejDate) { setError("Fasal aur beej ki tarikh dono bharo!"); return; }
+      setDbLoading(true);
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const { latitude, longitude } = pos.coords;
+          try {
+            const res = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${process.env.REACT_APP_WEATHER_KEY}`);
+            const data = await res.json();
+            const cityName = data?.[0]?.name || "Aapka Sheher";
+            setShehar(cityName);
+            const initMsgs = [{ role: "assistant", content: `Namaste ${kisanNaam || "Kisan"} ji! 🙏 Aapki ${fasal} fasal ka track shuru ho gaya!` }];
+            setMessages(initMsgs);
+            await saveData({ naam: kisanNaam, fasal, beejDate, shehar: cityName });
+            setDbLoading(false);
+            setScreen("main");
+          } catch {
+            setDbLoading(false);
+            setError("Location fetch nahi hui, dobara try karo");
+          }
+        },
+        async () => {
+          const initMsgs = [{ role: "assistant", content: `Namaste ${kisanNaam || "Kisan"} ji! 🙏` }];
+          setMessages(initMsgs);
+          await saveData({ naam: kisanNaam, fasal, beejDate, shehar: "Safidon" });
+          setDbLoading(false);
+          setScreen("main");
+        }
+      );
+    }}>{dbLoading ? "⏳ Location le rahe hain..." : "📍 Location Allow Karke Shuru Karein"}</motion.button>
+  </motion.div>
+);
+
+  // ===== SVG BACKGROUND FULLSCREEN =====
+  if (showBg) return (
+    <div style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", position: "relative", background: "#87CEEB", overflow: "hidden" }}
+      onClick={() => setShowBg(false)}>
+      <FasalBackground din={din} windSpeed={windSpeed} isRain={isRain} isNight={isNight} fasal={fasal} />
+      <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, textAlign: "center", zIndex: 10 }}>
+        <div style={{ background: "rgba(0,0,0,0.5)", color: "white", padding: "8px 16px", borderRadius: 20, display: "inline-block", fontSize: 12 }}>
+          👆 Tap karke wapas jao
+        </div>
       </div>
     </div>
   );
 
-  if (page === "khata") return <KhataPage phone={phone} onBack={() => setPage("main")} />;
-  if (page === "mandi") return <MandiBhavPage onBack={() => setPage("main")} />;
-  if (page === "quiz") return <QuizPage phone={phone} db={db} userPoints={userPoints} setUserPoints={setUserPoints} onBack={() => setPage("main")} />;
-  if (page === "yojna") return <YojnaPage onBack={() => setPage("main")} />;
-  if (page === "weather") return <WeatherPage weather={weather} forecast={forecast} shehar={shehar} onBack={() => setPage("main")} />;
-  if (page === "profile") return <ProfilePage phone={phone} db={db} naam={kisanNaam} shehar={shehar} fasal={fasal} beejDate={beejDate} streak={userStreak} points={userPoints} setScreen={setScreen} onLogout={handleLogout} onBack={() => setPage("main")} />;
-  if (page === "chat") return <ChatPage messages={messages} setMessages={setMessages} phone={phone} db={db} fasal={fasal} din={getDaysCount()} onBack={() => setPage("main")} />;
-  if (page === "community") return <CommunityPage phone={phone} db={db} naam={kisanNaam} onBack={() => setPage("main")} />;
-
-  const currentDin = getDaysCount();
-  const isRainy = weather ? weather.text.toLowerCase().includes("rain") || weather.text.toLowerCase().includes("drizzle") || weather.text.toLowerCase().includes("sh showers") : false;
-  const currentHour = new Date().getHours();
-  const isNightTime = currentHour >= 20 || currentHour < 5;
-
+  // ===== MAIN HOME =====
   return (
-    <div style={{ minHeight: "100vh", background: "#050d1a", position: "relative", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-      {showBg && <FasalBackground din={currentDin} windSpeed={weather ? weather.wind : 4} isRain={isRainy} isNight={isNightTime} fasal={fasal} />}
-      <HomePage page={page} setPage={setPage} showBg={showBg} setShowBg={setShowBg} kisanNaam={kisanNaam} shehar={shehar} fasal={fasal} din={currentDin} weather={weather} userPoints={userPoints} userStreak={userStreak} dbLoading={dbLoading} />
-    </div>
+    <HomePage
+      db={db}
+      phone={phone}
+      kisanNaam={kisanNaam || "Kisan"}
+      shehar={shehar}
+      fasal={fasal}
+      beejDate={beejDate}
+      weather={weather}
+      forecast={forecast}
+      stage={stage}
+      advice={advice}
+      din={din}
+      alert={alert}
+      getWeatherIcon={getWeatherIcon}
+      onOpenChat={handleOpenChat}
+      onOpenQuiz={() => setPage("quiz")}
+      onOpenYojna={() => setPage("yojna")}
+      onOpenWeather={() => setPage("weather")}
+      onOpenProfile={() => setPage("profile")}
+      onOpenKhata={() => setPage("khata")}
+      onOpenMandi={() => setPage("mandi")}
+      onOpenCommunity={() => setPage("community")}
+      onOpenBg={() => setShowBg(true)}
+      isNight={isNight}
+      isRain={isRain}
+    />
   );
 }
 
