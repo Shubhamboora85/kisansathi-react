@@ -295,7 +295,6 @@ function App() {
   const [confirmationResult, setConfirmationResult] = useState(null);
   const [kisanNaam, setKisanNaam] = useState("");
   const [shehar, setShehar] = useState("");
-  const [sheharSuggestions, setSheharSuggestions] = useState([]);
   const [fasal, setFasal] = useState("");
   const [beejDate, setBeejDate] = useState("");
   const [messages, setMessages] = useState([]);
@@ -393,14 +392,6 @@ function App() {
     }
   }, [shehar, screen]);
 
-  const fetchSuggestions = async (val) => {
-    if (val.length < 2) { setSheharSuggestions([]); return; }
-    try {
-      const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${val},IN&limit=5&appid=${process.env.REACT_APP_WEATHER_KEY}`);
-      const data = await res.json();
-      if (Array.isArray(data)) setSheharSuggestions([...new Set(data.map(d => `${d.name}${d.state ? ", " + d.state : ""}`))]);
-    } catch { setSheharSuggestions([]); }
-  };
 
   const handlePhoneSubmit = async () => {
     setError("");
