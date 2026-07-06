@@ -5,7 +5,7 @@ import ProfilePage from "./components/ProfilePage";
 import ChatPage from "./components/ChatPage";
 import CommunityPage from "./components/CommunityPage";
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import HomePage from "./components/HomePage";
@@ -22,10 +22,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const [otp, setOtp] = useState("");
-const [confirmationResult, setConfirmationResult] = useState(null);
 
-// ===== FARM SVG BACKGROUND =====
 function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const hour = new Date().getHours();
   const getSky = () => {
@@ -150,7 +147,6 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   );
 }
 
-// ===== KHATA PAGE =====
 function KhataPage({ phone, onBack }) {
   const [entries, setEntries] = useState([]);
   const [category, setCategory] = useState("Dawaai");
@@ -230,7 +226,6 @@ function KhataPage({ phone, onBack }) {
   );
 }
 
-// ===== MANDI PAGE =====
 function MandiBhavPage({ onBack }) {
   const [location, setLocation] = useState("");
   const [bhav, setBhav] = useState([]);
@@ -292,12 +287,12 @@ function MandiBhavPage({ onBack }) {
   );
 }
 
-// ===== MAIN APP =====
 function App() {
   const [screen, setScreen] = useState("splash");
   const [page, setPage] = useState("main");
   const [phone, setPhone] = useState("");
-  const [isNewUser, setIsNewUser] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState(null);
   const [kisanNaam, setKisanNaam] = useState("");
   const [shehar, setShehar] = useState("");
   const [sheharSuggestions, setSheharSuggestions] = useState([]);
@@ -313,7 +308,6 @@ function App() {
   const [userPoints, setUserPoints] = useState(0);
   const [userStreak, setUserStreak] = useState(0);
 
-  // ===== BACK BUTTON HANDLER =====
   useEffect(() => {
     const handleBackButton = () => {
       if (page !== "main") {
@@ -332,32 +326,30 @@ function App() {
     return () => window.removeEventListener("popstate", handleBackButton);
   }, [page, screen]);
 
-  // ===== AUTO LOGIN =====
   useEffect(() => {
-  const savedPhone = localStorage.getItem("kisan_phone");
-  if (savedPhone) {
-    setPhone(savedPhone); setDbLoading(true);
-    getDoc(doc(db, "kisans", savedPhone)).then(snap => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setKisanNaam(data.naam || "");
-        setShehar(data.shehar || "");
-        setFasal(data.fasal || "");
-        setBeejDate(data.beejDate || "");
-        setMessages([]);
-        setUserPoints(data.points || 0);
-        setUserStreak(data.streak || 0);
-        if (data.fasal && data.beejDate) setScreen("main");
-        else setScreen("fasal");
-      }
-      setDbLoading(false);
-    }).catch(() => setDbLoading(false));
-  } else {
-    setTimeout(() => setScreen("phone"), 2500);
-  }
-}, []);
+    const savedPhone = localStorage.getItem("kisan_phone");
+    if (savedPhone) {
+      setPhone(savedPhone); setDbLoading(true);
+      getDoc(doc(db, "kisans", savedPhone)).then(snap => {
+        if (snap.exists()) {
+          const data = snap.data();
+          setKisanNaam(data.naam || "");
+          setShehar(data.shehar || "");
+          setFasal(data.fasal || "");
+          setBeejDate(data.beejDate || "");
+          setMessages([]);
+          setUserPoints(data.points || 0);
+          setUserStreak(data.streak || 0);
+          if (data.fasal && data.beejDate) setScreen("main");
+          else setScreen("fasal");
+        }
+        setDbLoading(false);
+      }).catch(() => setDbLoading(false));
+    } else {
+      setTimeout(() => setScreen("phone"), 2500);
+    }
+  }, []);
 
-  // ===== NOTIFICATIONS SETUP =====
   useEffect(() => {
     if (phone && screen === "main") {
       setupNotifications(app, db, phone);
@@ -365,7 +357,6 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone, screen]);
 
-  // ===== WEATHER =====
   useEffect(() => {
     if (shehar && screen === "main") {
       const city = shehar.split(",")[0].trim();
@@ -374,32 +365,31 @@ function App() {
           if (data?.main) setWeather({ temp: Math.round(data.main.temp), humidity: data.main.humidity, description: data.weather[0].description, id: data.weather[0].id, wind: Math.round(data.wind.speed), city: data.name });
         }).catch(() => {});
       fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city},IN&appid=${process.env.REACT_APP_WEATHER_KEY}&units=metric&lang=hi`)
-  .then(r => r.json()).then(data => {
-    if (data?.list) {
-      const today = new Date().toDateString();
-      const seenDates = new Set([today]);
-      const dailyForecasts = [];
+        .then(r => r.json()).then(data => {
+          if (data?.list) {
+            const today = new Date().toDateString();
+            const seenDates = new Set([today]);
+            const dailyForecasts = [];
 
-      for (const d of data.list) {
-        const entryDate = new Date(d.dt * 1000);
-        const dateStr = entryDate.toDateString();
-        const hour = entryDate.getHours();
+            for (const d of data.list) {
+              const entryDate = new Date(d.dt * 1000);
+              const dateStr = entryDate.toDateString();
+              const hour = entryDate.getHours();
 
-        // Sirf naye dino ka data lo, aur dopahar ke aaspaas ka time prefer karo (12-15 ke beech)
-        if (!seenDates.has(dateStr) && (hour >= 11 && hour <= 15)) {
-          seenDates.add(dateStr);
-          dailyForecasts.push({
-            date: entryDate.toLocaleDateString("hi-IN", { weekday: "short", day: "numeric" }),
-            temp: Math.round(d.main.temp),
-            desc: d.weather[0].description,
-            id: d.weather[0].id
-          });
-        }
-        if (dailyForecasts.length === 3) break;
-      }
-      setForecast(dailyForecasts);
-    }
-  }).catch(() => {});
+              if (!seenDates.has(dateStr) && (hour >= 11 && hour <= 15)) {
+                seenDates.add(dateStr);
+                dailyForecasts.push({
+                  date: entryDate.toLocaleDateString("hi-IN", { weekday: "short", day: "numeric" }),
+                  temp: Math.round(d.main.temp),
+                  desc: d.weather[0].description,
+                  id: d.weather[0].id
+                });
+              }
+              if (dailyForecasts.length === 3) break;
+            }
+            setForecast(dailyForecasts);
+          }
+        }).catch(() => {});
     }
   }, [shehar, screen]);
 
@@ -413,74 +403,53 @@ function App() {
   };
 
   const handlePhoneSubmit = async () => {
-  setError("");
-  if (phone.length !== 10) { setError("10 digit number daalo!"); return; }
-  setDbLoading(true);
-  try {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
-    }
-    const result = await signInWithPhoneNumber(auth, "+91" + phone, window.recaptchaVerifier);
-    setConfirmationResult(result);
-    setScreen("otp");
-  } catch (e) {
-    setError("OTP bhejne mein dikkat aayi, dobara try karo!");
-  }
-  setDbLoading(false);
-};
-
-const handleOtpSubmit = async () => {
-  setError("");
-  if (otp.length !== 6) { setError("6 digit OTP daalo!"); return; }
-  setDbLoading(true);
-  try {
-    await confirmationResult.confirm(otp);
-    localStorage.setItem("kisan_phone", phone);
-    const snap = await getDoc(doc(db, "kisans", phone));
-    if (snap.exists()) {
-      const data = snap.data();
-      setKisanNaam(data.naam || "");
-      setShehar(data.shehar || "");
-      setFasal(data.fasal || "");
-      setBeejDate(data.beejDate || "");
-      setUserPoints(data.points || 0);
-      setUserStreak(data.streak || 0);
-      if (data.fasal && data.beejDate) setScreen("main");
-      else setScreen("fasal");
-    } else {
-      await setDoc(doc(db, "kisans", phone), { phone, naam: "", shehar: "", fasal: "", beejDate: "", points: 0, streak: 0 });
-      setScreen("fasal");
-    }
-  } catch {
-    setError("Galat OTP! Dobara try karo");
-  }
-  setDbLoading(false);
-};
-
-  const handlePinSubmit = async () => {
     setError("");
-    if (pin.length !== 4) { setError("4 digit PIN daalo!"); return; }
+    if (phone.length !== 10) { setError("10 digit number daalo!"); return; }
     setDbLoading(true);
     try {
-      if (isNewUser) {
-        if (pin !== pinConfirm) { setError("PIN match nahi hua!"); setDbLoading(false); return; }
-        await setDoc(doc(db, "kisans", phone), { phone, pin, naam: "", shehar: "", fasal: "", beejDate: "", messages: [], khata: [], points: 0, streak: 0 });
-        setScreen("naam");
-      } else {
-        const snap = await getDoc(doc(db, "kisans", phone));
-        if (snap.data()?.pin !== pin) { setError("Galat PIN!"); setDbLoading(false); return; }
-        localStorage.setItem("kisan_phone", phone);
-        localStorage.setItem("kisan_pin", pin);
-        if (fasal && beejDate) setScreen("main");
-        else setScreen("naam");
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
       }
-    } catch { setError("Kuch gadbad hui!"); }
+      const result = await signInWithPhoneNumber(auth, "+91" + phone, window.recaptchaVerifier);
+      setConfirmationResult(result);
+      setScreen("otp");
+    } catch (e) {
+      setError("OTP bhejne mein dikkat aayi, dobara try karo!");
+    }
+    setDbLoading(false);
+  };
+
+  const handleOtpSubmit = async () => {
+    setError("");
+    if (otp.length !== 6) { setError("6 digit OTP daalo!"); return; }
+    setDbLoading(true);
+    try {
+      await confirmationResult.confirm(otp);
+      localStorage.setItem("kisan_phone", phone);
+      const snap = await getDoc(doc(db, "kisans", phone));
+      if (snap.exists()) {
+        const data = snap.data();
+        setKisanNaam(data.naam || "");
+        setShehar(data.shehar || "");
+        setFasal(data.fasal || "");
+        setBeejDate(data.beejDate || "");
+        setUserPoints(data.points || 0);
+        setUserStreak(data.streak || 0);
+        if (data.fasal && data.beejDate) setScreen("main");
+        else setScreen("fasal");
+      } else {
+        await setDoc(doc(db, "kisans", phone), { phone, naam: "", shehar: "", fasal: "", beejDate: "", points: 0, streak: 0 });
+        setScreen("fasal");
+      }
+    } catch {
+      setError("Galat OTP! Dobara try karo");
+    }
     setDbLoading(false);
   };
 
   const saveData = async (extra = {}) => {
     if (!phone) return;
-    try { await setDoc(doc(db, "kisans", phone), { phone, pin, naam: kisanNaam, shehar, fasal, beejDate, ...extra }, { merge: true }); }
+    try { await setDoc(doc(db, "kisans", phone), { phone, naam: kisanNaam, shehar, fasal, beejDate, ...extra }, { merge: true }); }
     catch (e) { console.log(e); }
   };
 
@@ -576,46 +545,46 @@ Rules: Hindi mein, 2-3 lines mein, aasan bhasha, zameen ka size poochhe bina mat
   };
 
   const sendImageMessage = async (base64Image, userQuestion = "") => {
-  const newMsgs = [...messages, { role: "user", content: userQuestion || "Photo bheji", image: base64Image }];
-  setMessages(newMsgs);
-  setLoading(true);
-  try {
-    const promptText = userQuestion
-      ? `Tu ek experienced Indian agriculture expert hai. Is photo ko dekho — yeh fasal, patta, keeda, ya dawai/khad ki packet kuch bhi ho sakti hai. User ka sawaal hai: "${userQuestion}". Photo ke context mein iska jawab do — Hindi mein, 3-4 lines mein, aasan bhasha mein.`
-      : `Tu ek experienced Indian agriculture expert hai. Is photo ko pehle pehchano ki yeh kya hai:
+    const newMsgs = [...messages, { role: "user", content: userQuestion || "Photo bheji", image: base64Image }];
+    setMessages(newMsgs);
+    setLoading(true);
+    try {
+      const promptText = userQuestion
+        ? `Tu ek experienced Indian agriculture expert hai. Is photo ko dekho — yeh fasal, patta, keeda, ya dawai/khad ki packet kuch bhi ho sakti hai. User ka sawaal hai: "${userQuestion}". Photo ke context mein iska jawab do — Hindi mein, 3-4 lines mein, aasan bhasha mein.`
+        : `Tu ek experienced Indian agriculture expert hai. Is photo ko pehle pehchano ki yeh kya hai:
 1) Agar yeh FASAL/PATTA hai — bimari ya nutrient deficiency batao, kaaran batao, treatment batao.
 2) Agar yeh DAWAI/KHAD ki packet/bottle hai — uska naam, active ingredient, kis cheez ke liye use hoti hai, aur sahi matra/dosage batao per acre.
 3) Agar dono mein se kuch nahi samajh aaye, to bolo dobara saaf photo bhejo.
 Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
-      body: JSON.stringify({
-        model: "meta-llama/llama-4-maverick-17b-128e-instruct",
-        max_tokens: 350,
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: promptText },
-              { type: "image_url", image_url: { url: base64Image } }
-            ]
-          }
-        ]
-      })
-    });
-    if (!res.ok) throw new Error("API Error");
-    const data = await res.json();
-    const jawab = data?.choices?.[0]?.message?.content;
-    if (!jawab) throw new Error("No response");
-    const updated = [...newMsgs, { role: "assistant", content: jawab }];
-    setMessages(updated);
-  } catch {
-    setMessages([...newMsgs, { role: "assistant", content: "Photo samajhne mein dikkat aayi — dobara saaf photo bhejo!" }]);
-  }
-  setLoading(false);
-};
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
+        body: JSON.stringify({
+          model: "meta-llama/llama-4-maverick-17b-128e-instruct",
+          max_tokens: 350,
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: promptText },
+                { type: "image_url", image_url: { url: base64Image } }
+              ]
+            }
+          ]
+        })
+      });
+      if (!res.ok) throw new Error("API Error");
+      const data = await res.json();
+      const jawab = data?.choices?.[0]?.message?.content;
+      if (!jawab) throw new Error("No response");
+      const updated = [...newMsgs, { role: "assistant", content: jawab }];
+      setMessages(updated);
+    } catch {
+      setMessages([...newMsgs, { role: "assistant", content: "Photo samajhne mein dikkat aayi — dobara saaf photo bhejo!" }]);
+    }
+    setLoading(false);
+  };
 
   const handleOpenChat = (initMsg = "") => {
     setPage("chat");
@@ -626,18 +595,15 @@ Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
 
   const handleLogout = () => {
     localStorage.removeItem("kisan_phone");
-    localStorage.removeItem("kisan_pin");
-    setScreen("phone"); setPhone(""); setPin(""); setKisanNaam("");
+    setScreen("phone"); setPhone(""); setKisanNaam("");
     setShehar(""); setFasal(""); setBeejDate(""); setMessages([]);
     setUserPoints(0); setUserStreak(0); setPage("main");
   };
 
- 
   const authStyle = { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#0a0f0c", padding: 20, textAlign: "center" };
   const inputStyle = { width: "85%", padding: "11px 15px", borderRadius: 10, border: "1px solid rgba(120,220,150,0.25)", background: "rgba(120,220,150,0.07)", color: "#fff", fontSize: 14, margin: "7px 0", outline: "none" };
   const btnStyle = { background: "#1eb464", color: "white", border: "none", borderRadius: 10, padding: "11px 28px", fontSize: 15, fontWeight: "bold", cursor: "pointer", marginTop: 10, width: "85%" };
 
-  // ===== PAGE ROUTING =====
   if (page === "chat") return <ChatPage messages={messages} loading={loading} onSend={sendMessage} onSendImage={sendImageMessage} onBack={() => setPage("main")} kisanNaam={kisanNaam || "Kisan"} />;
   if (page === "khata") return <KhataPage phone={phone} onBack={() => setPage("main")} />;
   if (page === "mandi") return <MandiBhavPage onBack={() => setPage("main")} />;
@@ -647,7 +613,6 @@ Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
   if (page === "profile") return <ProfilePage onBack={() => setPage("main")} kisanNaam={kisanNaam || "Kisan"} phone={phone} shehar={shehar} fasal={fasal} beejDate={beejDate} points={userPoints} streak={userStreak} onLogout={handleLogout} onChangeFasal={() => { setPage("main"); setScreen("fasal"); }} />;
   if (page === "community") return <CommunityPage onBack={() => setPage("main")} db={db} kisanNaam={kisanNaam || "Kisan"} phone={phone} />;
 
-  // ===== SPLASH =====
   if (screen === "splash" || (dbLoading && !kisanNaam)) return (
     <motion.div style={authStyle} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
       <motion.div initial={{ y: -50 }} animate={{ y: 0 }} transition={{ delay: 0.3, type: "spring" }} style={{ fontSize: 80 }}>🌾</motion.div>
@@ -660,7 +625,6 @@ Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
     </motion.div>
   );
 
-  // ===== PHONE =====
   if (screen === "phone") return (
     <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
       <div style={{ fontSize: 60 }}>📱</div>
@@ -676,67 +640,64 @@ Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
   );
 
   if (screen === "otp") return (
-  <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
-    <div style={{ fontSize: 50 }}>🔐</div>
-    <h3 style={{ color: "#7dffaa" }}>OTP Daalein</h3>
-    <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>+91{phone} par bheja gaya hai</p>
-    <input style={inputStyle} placeholder="6 digit OTP" value={otp} maxLength={6} type="tel"
-      onChange={e => setOtp(e.target.value.replace(/\D/g, ""))} onKeyDown={e => e.key === "Enter" && handleOtpSubmit()} />
-    {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
-    {dbLoading ? <div style={{ color: "#7dffaa" }}>⏳ Verify ho raha hai...</div> :
-      <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={handleOtpSubmit}>✅ Verify Karo</motion.button>}
-    <button onClick={() => { setScreen("phone"); setOtp(""); setError(""); }}
-      style={{ background: "none", border: "none", color: "#7dffaa", marginTop: 10, cursor: "pointer", fontSize: 13 }}>← Number Badlein</button>
-  </motion.div>
-);
+    <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
+      <div style={{ fontSize: 50 }}>🔐</div>
+      <h3 style={{ color: "#7dffaa" }}>OTP Daalein</h3>
+      <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>+91{phone} par bheja gaya hai</p>
+      <input style={inputStyle} placeholder="6 digit OTP" value={otp} maxLength={6} type="tel"
+        onChange={e => setOtp(e.target.value.replace(/\D/g, ""))} onKeyDown={e => e.key === "Enter" && handleOtpSubmit()} />
+      {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
+      {dbLoading ? <div style={{ color: "#7dffaa" }}>⏳ Verify ho raha hai...</div> :
+        <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={handleOtpSubmit}>✅ Verify Karo</motion.button>}
+      <button onClick={() => { setScreen("phone"); setOtp(""); setError(""); }}
+        style={{ background: "none", border: "none", color: "#7dffaa", marginTop: 10, cursor: "pointer", fontSize: 13 }}>← Number Badlein</button>
+    </motion.div>
+  );
 
-
-  // ===== FASAL =====
   if (screen === "fasal") return (
-  <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
-    <div style={{ fontSize: 50 }}>🌾</div>
-    <h3 style={{ color: "#7dffaa" }}>Namaste!</h3>
-    <input style={inputStyle} placeholder="Apna naam likhein (optional)" value={kisanNaam || "Kisan"} onChange={e => setKisanNaam(e.target.value)} />
-    <select style={{ ...inputStyle, appearance: "none" }} value={fasal} onChange={e => setFasal(e.target.value)}>
-      <option value="" style={{ background: "#0a0f0c" }}>-- Fasal chunein --</option>
-      {["🌾 Chawal (Rice)","🌿 Gehun (Wheat)","🟡 Sarso (Mustard)","🍬 Ganna (Sugarcane)"].map(f => <option key={f} style={{ background: "#0a0f0c" }}>{f}</option>)}
-    </select>
-    <input style={inputStyle} type="date" value={beejDate} max={new Date().toISOString().split("T")[0]} onChange={e => setBeejDate(e.target.value)} />
-    {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
-    <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={async () => {
-      if (!fasal || !beejDate) { setError("Fasal aur beej ki tarikh dono bharo!"); return; }
-      setDbLoading(true);
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const { latitude, longitude } = pos.coords;
-          try {
-            const res = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${process.env.REACT_APP_WEATHER_KEY}`);
-            const data = await res.json();
-            const cityName = data?.[0]?.name || "Aapka Sheher";
-            setShehar(cityName);
-            const initMsgs = [{ role: "assistant", content: `Namaste ${kisanNaam || "Kisan"} ji! 🙏 Aapki ${fasal} fasal ka track shuru ho gaya!` }];
+    <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
+      <div style={{ fontSize: 50 }}>🌾</div>
+      <h3 style={{ color: "#7dffaa" }}>Namaste!</h3>
+      <input style={inputStyle} placeholder="Apna naam likhein (optional)" value={kisanNaam} onChange={e => setKisanNaam(e.target.value)} />
+      <select style={{ ...inputStyle, appearance: "none" }} value={fasal} onChange={e => setFasal(e.target.value)}>
+        <option value="" style={{ background: "#0a0f0c" }}>-- Fasal chunein --</option>
+        {["🌾 Chawal (Rice)","🌿 Gehun (Wheat)","🟡 Sarso (Mustard)","🍬 Ganna (Sugarcane)"].map(f => <option key={f} style={{ background: "#0a0f0c" }}>{f}</option>)}
+      </select>
+      <input style={inputStyle} type="date" value={beejDate} max={new Date().toISOString().split("T")[0]} onChange={e => setBeejDate(e.target.value)} />
+      {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
+      <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={async () => {
+        if (!fasal || !beejDate) { setError("Fasal aur beej ki tarikh dono bharo!"); return; }
+        setDbLoading(true);
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            const { latitude, longitude } = pos.coords;
+            try {
+              const res = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${process.env.REACT_APP_WEATHER_KEY}`);
+              const data = await res.json();
+              const cityName = data?.[0]?.name || "Aapka Sheher";
+              setShehar(cityName);
+              const initMsgs = [{ role: "assistant", content: `Namaste ${kisanNaam || "Kisan"} ji! 🙏 Aapki ${fasal} fasal ka track shuru ho gaya!` }];
+              setMessages(initMsgs);
+              await saveData({ naam: kisanNaam, fasal, beejDate, shehar: cityName });
+              setDbLoading(false);
+              setScreen("main");
+            } catch {
+              setDbLoading(false);
+              setError("Location fetch nahi hui, dobara try karo");
+            }
+          },
+          async () => {
+            const initMsgs = [{ role: "assistant", content: `Namaste ${kisanNaam || "Kisan"} ji! 🙏` }];
             setMessages(initMsgs);
-            await saveData({ naam: kisanNaam, fasal, beejDate, shehar: cityName });
+            await saveData({ naam: kisanNaam, fasal, beejDate, shehar: "Safidon" });
             setDbLoading(false);
             setScreen("main");
-          } catch {
-            setDbLoading(false);
-            setError("Location fetch nahi hui, dobara try karo");
           }
-        },
-        async () => {
-          const initMsgs = [{ role: "assistant", content: `Namaste ${kisanNaam || "Kisan"} ji! 🙏` }];
-          setMessages(initMsgs);
-          await saveData({ naam: kisanNaam, fasal, beejDate, shehar: "Safidon" });
-          setDbLoading(false);
-          setScreen("main");
-        }
-      );
-    }}>{dbLoading ? "⏳ Location le rahe hain..." : "📍 Location Allow Karke Shuru Karein"}</motion.button>
-  </motion.div>
-);
+        );
+      }}>{dbLoading ? "⏳ Location le rahe hain..." : "📍 Location Allow Karke Shuru Karein"}</motion.button>
+    </motion.div>
+  );
 
-  // ===== SVG BACKGROUND FULLSCREEN =====
   if (showBg) return (
     <div style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", position: "relative", background: "#87CEEB", overflow: "hidden" }}
       onClick={() => setShowBg(false)}>
@@ -749,7 +710,6 @@ Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
     </div>
   );
 
-  // ===== MAIN HOME =====
   return (
     <HomePage
       db={db}
