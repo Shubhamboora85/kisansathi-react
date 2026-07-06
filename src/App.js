@@ -406,13 +406,15 @@ const handlePhoneSubmit = async () => {
   if (phone.length !== 10) { setError("10 digit number daalo!"); return; }
   setDbLoading(true);
   try {
-    const result = await signInWithPhoneNumber(auth, "+91" + phone, window.recaptchaVerifier);
+    const verifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
+    await verifier.render();
+    const result = await signInWithPhoneNumber(auth, "+91" + phone, verifier);
     setConfirmationResult(result);
     setScreen("otp");
   } catch (e) {
-  console.error("Firebase OTP Error:", e);
-  setError("OTP bhejne mein dikkat aayi: " + e.code);
-}
+    console.error("Firebase OTP Error:", e);
+    setError("OTP bhejne mein dikkat aayi: " + e.code);
+  }
   setDbLoading(false);
 };
 
@@ -634,7 +636,6 @@ Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
       {dbLoading ? <div style={{ color: "#7dffaa", marginTop: 12 }}>⏳ Loading...</div> :
         <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={handlePhoneSubmit}>✅ Aage Badho</motion.button>}
     </motion.div>
-    <div id="recaptcha-container"></div>
   </>
 );
 
