@@ -11,7 +11,6 @@ import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 import HomePage from "./components/HomePage";
 import { setupNotifications } from "./components/notifications";
 import { getFullKnowledgeBase } from "./components/farmKnowledge";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import "./App.css";
 
 const firebaseConfig = {
@@ -20,7 +19,6 @@ const firebaseConfig = {
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
 };
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
 
 function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
@@ -291,10 +289,9 @@ function App() {
   const [screen, setScreen] = useState("splash");
   const [page, setPage] = useState("main");
   const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
-  const [confirmationResult, setConfirmationResult] = useState(null);
   const [kisanNaam, setKisanNaam] = useState("");
   const [shehar, setShehar] = useState("");
+  const [sheharSuggestions, setSheharSuggestions] = useState([]);
   const [fasal, setFasal] = useState("");
   const [beejDate, setBeejDate] = useState("");
   const [messages, setMessages] = useState([]);
@@ -350,14 +347,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-  if (screen === "phone" && !window.recaptchaVerifier) {
-    setTimeout(() => {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
-    }, 100);
-  }
-}, [screen]);
-
-  useEffect(() => {
     if (phone && screen === "main") {
       setupNotifications(app, db, phone);
     }
@@ -400,30 +389,20 @@ function App() {
     }
   }, [shehar, screen]);
 
+  const fetchSuggestions = async (val) => {
+    if (val.length < 2) { setSheharSuggestions([]); return; }
+    try {
+      const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${val},IN&limit=5&appid=${process.env.REACT_APP_WEATHER_KEY}`);
+      const data = await res.json();
+      if (Array.isArray(data)) setSheharSuggestions([...new Set(data.map(d => `${d.name}${d.state ? ", " + d.state : ""}`))]);
+    } catch { setSheharSuggestions([]); }
+  };
 
-const handlePhoneSubmit = async () => {
-  setError("");
-  if (phone.length !== 10) { setError("10 digit number daalo!"); return; }
-  setDbLoading(true);
-  try {
-    const verifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
-    await verifier.render();
-    const result = await signInWithPhoneNumber(auth, "+91" + phone, verifier);
-    setConfirmationResult(result);
-    setScreen("otp");
-  } catch (e) {
-    console.error("Firebase OTP Error:", e);
-    setError("OTP bhejne mein dikkat aayi: " + e.code);
-  }
-  setDbLoading(false);
-};
-
-  const handleOtpSubmit = async () => {
+  const handlePhoneSubmit = async () => {
     setError("");
-    if (otp.length !== 6) { setError("6 digit OTP daalo!"); return; }
+    if (phone.length !== 10) { setError("10 digit number daalo!"); return; }
     setDbLoading(true);
     try {
-      await confirmationResult.confirm(otp);
       localStorage.setItem("kisan_phone", phone);
       const snap = await getDoc(doc(db, "kisans", phone));
       if (snap.exists()) {
@@ -440,8 +419,8 @@ const handlePhoneSubmit = async () => {
         await setDoc(doc(db, "kisans", phone), { phone, naam: "", shehar: "", fasal: "", beejDate: "", points: 0, streak: 0 });
         setScreen("fasal");
       }
-    } catch {
-      setError("Galat OTP! Dobara try karo");
+    } catch (e) {
+      setError("Internet check karo, dobara try karo!");
     }
     setDbLoading(false);
   };
@@ -625,7 +604,6 @@ Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
   );
 
   if (screen === "phone") return (
-  <>
     <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
       <div style={{ fontSize: 60 }}>📱</div>
       <h2 style={{ color: "#7dffaa" }}>Namaste!</h2>
@@ -635,22 +613,6 @@ Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
       {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
       {dbLoading ? <div style={{ color: "#7dffaa", marginTop: 12 }}>⏳ Loading...</div> :
         <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={handlePhoneSubmit}>✅ Aage Badho</motion.button>}
-    </motion.div>
-  </>
-);
-
-  if (screen === "otp") return (
-    <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
-      <div style={{ fontSize: 50 }}>🔐</div>
-      <h3 style={{ color: "#7dffaa" }}>OTP Daalein</h3>
-      <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 13 }}>+91{phone} par bheja gaya hai</p>
-      <input style={inputStyle} placeholder="6 digit OTP" value={otp} maxLength={6} type="tel"
-        onChange={e => setOtp(e.target.value.replace(/\D/g, ""))} onKeyDown={e => e.key === "Enter" && handleOtpSubmit()} />
-      {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
-      {dbLoading ? <div style={{ color: "#7dffaa" }}>⏳ Verify ho raha hai...</div> :
-        <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={handleOtpSubmit}>✅ Verify Karo</motion.button>}
-      <button onClick={() => { setScreen("phone"); setOtp(""); setError(""); }}
-        style={{ background: "none", border: "none", color: "#7dffaa", marginTop: 10, cursor: "pointer", fontSize: 13 }}>← Number Badlein</button>
     </motion.div>
   );
 
