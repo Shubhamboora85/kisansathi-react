@@ -350,6 +350,12 @@ function App() {
   }, []);
 
   useEffect(() => {
+  if (screen === "phone" && !window.recaptchaVerifier) {
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
+  }
+}, [screen]);
+
+  useEffect(() => {
     if (phone && screen === "main") {
       setupNotifications(app, db, phone);
     }
@@ -393,22 +399,19 @@ function App() {
   }, [shehar, screen]);
 
 
-  const handlePhoneSubmit = async () => {
-    setError("");
-    if (phone.length !== 10) { setError("10 digit number daalo!"); return; }
-    setDbLoading(true);
-    try {
-      if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
-      }
-      const result = await signInWithPhoneNumber(auth, "+91" + phone, window.recaptchaVerifier);
-      setConfirmationResult(result);
-      setScreen("otp");
-    } catch (e) {
-      setError("OTP bhejne mein dikkat aayi, dobara try karo!");
-    }
-    setDbLoading(false);
-  };
+const handlePhoneSubmit = async () => {
+  setError("");
+  if (phone.length !== 10) { setError("10 digit number daalo!"); return; }
+  setDbLoading(true);
+  try {
+    const result = await signInWithPhoneNumber(auth, "+91" + phone, window.recaptchaVerifier);
+    setConfirmationResult(result);
+    setScreen("otp");
+  } catch (e) {
+    setError("OTP bhejne mein dikkat aayi, dobara try karo!");
+  }
+  setDbLoading(false);
+};
 
   const handleOtpSubmit = async () => {
     setError("");
