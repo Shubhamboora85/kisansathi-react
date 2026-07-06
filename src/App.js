@@ -408,8 +408,9 @@ const handlePhoneSubmit = async () => {
     setConfirmationResult(result);
     setScreen("otp");
   } catch (e) {
-    setError("OTP bhejne mein dikkat aayi, dobara try karo!");
-  }
+  console.error("Firebase OTP Error:", e);
+  setError("OTP bhejne mein dikkat aayi: " + e.code);
+}
   setDbLoading(false);
 };
 
