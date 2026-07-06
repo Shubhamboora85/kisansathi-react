@@ -351,7 +351,9 @@ function App() {
 
   useEffect(() => {
   if (screen === "phone" && !window.recaptchaVerifier) {
-    window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
+    setTimeout(() => {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
+    }, 100);
   }
 }, [screen]);
 
@@ -621,6 +623,7 @@ Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
   );
 
   if (screen === "phone") return (
+  <>
     <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
       <div style={{ fontSize: 60 }}>📱</div>
       <h2 style={{ color: "#7dffaa" }}>Namaste!</h2>
@@ -630,9 +633,10 @@ Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
       {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
       {dbLoading ? <div style={{ color: "#7dffaa", marginTop: 12 }}>⏳ Loading...</div> :
         <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={handlePhoneSubmit}>✅ Aage Badho</motion.button>}
-      <div id="recaptcha-container"></div>
     </motion.div>
-  );
+    <div id="recaptcha-container"></div>
+  </>
+);
 
   if (screen === "otp") return (
     <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
