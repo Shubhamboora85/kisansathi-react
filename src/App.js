@@ -1,26 +1,40 @@
-import QuizPage from "./components/QuizPage";
-import YojnaPage from "./components/YojnaPage";
-import WeatherPage from "./components/WeatherPage";
-import ProfilePage from "./components/ProfilePage";
-import ChatPage from "./components/ChatPage";
-import CommunityPage from "./components/CommunityPage";
+// App.js — COMPLETELY REBUILT
+// Lucide icons, Green theme, Transparent UI, Background images
+import {
+  Home, MessageCircle, TrendingUp, MapPin, Cloud, BookOpen,
+  Users, Settings, LogOut, Bell, User, ChevronRight, Search,
+  Mic, Camera, Send, Heart, AlertCircle, Loader, ArrowLeft,
+  Wheat, BarChart3, FileText, Droplets
+} from "lucide-react";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { initializeApp } from "firebase/app";
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
-import HomePage from "./components/HomePage";
-import { setupNotifications } from "./components/notifications";
-import { getFullKnowledgeBase } from "./components/farmKnowledge";
-import "./App.css";
+import { getFirestore, doc, setDoc, getDoc, collection, addDoc, query, orderBy, onSnapshot, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// COLOR SCHEME
+const colors = {
+  darkGreen: "#2D5A3D",
+  lightGreen: "#1a3428",
+  cream: "#F5F1E8",
+  lightCream: "#E8E4D8",
+  gold: "#D4A574",
+  success: "#6FCF97",
+  danger: "#E27C6B",
+  text: "#1A1A1A",
+  textLight: "#6B6B6B",
+  border: "#D9D1C0",
+};
+
+// KHASRA BACKGROUND COMPONENT
 function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   const hour = new Date().getHours();
   const getSky = () => {
@@ -126,7 +140,7 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
       ))}
       <rect x="0" y="198" width="480" height="102" fill="url(#gg)" />
       <rect x="0" y="235" width="480" height="65" fill="url(#soil)" />
-      {(fasal === "🌾 Chawal (Rice)" || !fasal) && din > 8 && (
+      {(fasal === "Chawal (Rice)" || !fasal) && din > 8 && (
         <rect x="0" y="225" width="480" height="12" fill="url(#wg)" />
       )}
       {[...Array(cols)].map((_, i) => {
@@ -145,23 +159,676 @@ function FasalBackground({ din, windSpeed, isRain, isNight, fasal }) {
   );
 }
 
-function KhataPage({ phone, onBack }) {
+function HomePage({
+  db, phone, kisanNaam, shehar, fasal, beejDate,
+  weather, forecast, stage, advice, din, alert,
+  getWeatherIcon, onOpenChat, onOpenKhata, onOpenMandi,
+  onOpenBg, onOpenYojna, onOpenWeather, onOpenProfile, onOpenCommunity
+}) {
+  const [streak, setStreak] = useState(0);
+  const [points, setPoints] = useState(0);
+
+  const progressPercent = Math.min((din / 120) * 100, 100);
+  const ringR = 22;
+  const ringCirc = 2 * Math.PI * ringR;
+  const ringOffset = ringCirc - (progressPercent / 100) * ringCirc;
+
+  return (
+    <div style={{ minHeight: "100vh", background: colors.cream, display: "flex", flexDirection: "column", maxWidth: 480, margin: "0 auto" }}>
+      {/* HEADER WITH BG IMAGE */}
+      <div style={{
+        position: "relative", height: 240, background: `url(/public/home-bg.png)`,
+        backgroundSize: "cover", backgroundPosition: "center", overflow: "hidden"
+      }}>
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.05) 0%, transparent 40%, rgba(245,241,232,0.8) 100%)" }} />
+        
+        <div style={{ position: "relative", zIndex: 2, padding: "14px 16px", display: "flex", justifyContent: "space-between" }}>
+          <div>
+            <p style={{ color: colors.darkGreen, fontSize: 11, margin: "0 0 2px 0", fontWeight: 500 }}>Namaste,</p>
+            <h1 style={{ fontFamily: "Poppins, sans-serif", fontSize: 22, fontWeight: 700, color: colors.darkGreen, margin: 0 }}>
+              {kisanNaam}
+            </h1>
+          </div>
+          <button onClick={onOpenProfile} style={{
+            width: 40, height: 40, borderRadius: "50%", background: colors.darkGreen, border: "none",
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center"
+          }}>
+            <User size={18} color="white" />
+          </button>
+        </div>
+
+        {/* TRANSPARENT WEATHER CARD */}
+        <motion.div onClick={onOpenWeather} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+          style={{
+            position: "absolute", top: 60, right: 16, zIndex: 3,
+            background: "rgba(255, 255, 255, 0.75)", backdropFilter: "blur(8px)",
+            borderRadius: 14, padding: "10px 14px", cursor: "pointer", minWidth: 100,
+            border: `1px solid ${colors.border}`
+          }}>
+          {weather ? (
+            <>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+                <span style={{ fontSize: 16 }}>
+                  {weather.id < 300 && "⛈️"}
+                  {weather.id >= 300 && weather.id < 500 && "🌦️"}
+                  {weather.id >= 500 && weather.id < 600 && "🌧️"}
+                  {weather.id >= 600 && weather.id < 700 && "❄️"}
+                  {weather.id >= 700 && weather.id < 800 && "🌫️"}
+                  {weather.id === 800 && "☀️"}
+                  {weather.id > 800 && "⛅"}
+                </span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: colors.darkGreen }}>{weather.temp}°C</span>
+              </div>
+              <div style={{ fontSize: 9, color: colors.textLight, marginTop: 2 }}>{weather.description}</div>
+            </>
+          ) : (
+            <div style={{ fontSize: 9, color: colors.textLight }}>Loading...</div>
+          )}
+        </motion.div>
+      </div>
+
+      {/* SEARCH + VOICE */}
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+        style={{
+          margin: "12px 16px 0", background: "white", borderRadius: 24, padding: "8px 12px",
+          display: "flex", alignItems: "center", gap: 8, border: `1px solid ${colors.border}`,
+          cursor: "pointer"
+        }} onClick={onOpenChat}>
+        <Search size={16} color={colors.textLight} />
+        <input placeholder="AI Chatbot se poochhe..." style={{
+          flex: 1, background: "none", border: "none", outline: "none",
+          fontSize: 12, color: colors.text, fontFamily: "Inter, sans-serif"
+        }} disabled />
+        <Camera size={14} color={colors.darkGreen} />
+        <Mic size={14} color={colors.darkGreen} />
+      </motion.div>
+
+      {/* QUICK ACTION BUTTONS */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, margin: "12px 16px", padding: 0 }}>
+        <motion.button whileTap={{ scale: 0.94 }} onClick={onOpenMandi}
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: 12,
+            background: "white", border: `1px solid ${colors.border}`, borderRadius: 14,
+            cursor: "pointer", fontSize: 10, fontWeight: 600, color: colors.darkGreen
+          }}>
+          <TrendingUp size={18} />
+          <span>Mandi Bhav</span>
+        </motion.button>
+
+        <motion.button whileTap={{ scale: 0.94 }} onClick={onOpenYojna}
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: 12,
+            background: "white", border: `1px solid ${colors.border}`, borderRadius: 14,
+            cursor: "pointer", fontSize: 10, fontWeight: 600, color: colors.darkGreen
+          }}>
+          <FileText size={18} />
+          <span>Yojnaayein</span>
+        </motion.button>
+
+        <motion.button whileTap={{ scale: 0.94 }} onClick={onOpenCommunity}
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: 12,
+            background: "white", border: `1px solid ${colors.border}`, borderRadius: 14,
+            cursor: "pointer", fontSize: 10, fontWeight: 600, color: colors.darkGreen
+          }}>
+          <Users size={18} />
+          <span>Community</span>
+        </motion.button>
+
+        <motion.button whileTap={{ scale: 0.94 }} onClick={onOpenWeather}
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: 12,
+            background: "white", border: `1px solid ${colors.border}`, borderRadius: 14,
+            cursor: "pointer", fontSize: 10, fontWeight: 600, color: colors.darkGreen
+          }}>
+          <Cloud size={18} />
+          <span>Mausam</span>
+        </motion.button>
+
+        <motion.button whileTap={{ scale: 0.94 }} onClick={onOpenKhata}
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: 12,
+            background: "white", border: `1px solid ${colors.border}`, borderRadius: 14,
+            cursor: "pointer", fontSize: 10, fontWeight: 600, color: colors.darkGreen
+          }}>
+          <BookOpen size={18} />
+          <span>Khata</span>
+        </motion.button>
+
+        <motion.button whileTap={{ scale: 0.94 }} onClick={onOpenBg}
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: 12,
+            background: "white", border: `1px solid ${colors.border}`, borderRadius: 14,
+            cursor: "pointer", fontSize: 10, fontWeight: 600, color: colors.darkGreen
+          }}>
+          <Wheat size={18} />
+          <span>Fasal View</span>
+        </motion.button>
+      </div>
+
+      {/* ALERT BOX */}
+      {alert && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          style={{
+            margin: "0 16px 12px", background: "rgba(226, 124, 107, 0.1)",
+            border: `1px solid ${colors.danger}`, borderRadius: 12, padding: "9px 12px",
+            fontSize: 11, color: colors.danger, display: "flex", gap: 8, alignItems: "flex-start"
+          }}>
+          <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>{alert}</span>
+        </motion.div>
+      )}
+
+      {/* FASAL CARD */}
+      <motion.div onClick={onOpenBg} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        style={{
+          margin: "0 16px 12px", background: "white", border: `1px solid ${colors.border}`,
+          borderRadius: 16, padding: "14px", cursor: "pointer", position: "relative", overflow: "hidden"
+        }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <p style={{ fontSize: 9, color: colors.textLight, margin: "0 0 4px 0" }}>Aapki Fasal</p>
+            <h3 style={{ fontSize: 14, color: colors.darkGreen, margin: 0, fontWeight: 700, marginBottom: 6 }}>{fasal}</h3>
+            <p style={{ fontSize: 9, color: colors.success, margin: 0 }}>{stage}</p>
+            <p style={{ fontSize: 8, color: colors.textLight, margin: "3px 0 0 0" }}>{Math.max(0, 120 - din)} din remaining</p>
+          </div>
+          <div style={{ position: "relative", width: 54, height: 54 }}>
+            <svg width="54" height="54" viewBox="0 0 54 54">
+              <circle cx="27" cy="27" r={ringR} fill="none" stroke="rgba(0,0,0,0.1)" strokeWidth="5" />
+              <circle cx="27" cy="27" r={ringR} fill="none" stroke={colors.success} strokeWidth="5"
+                strokeLinecap="round" strokeDasharray={ringCirc} strokeDashoffset={ringOffset}
+                transform="rotate(-90 27 27)" style={{ transition: "stroke-dashoffset 1s ease" }} />
+            </svg>
+            <div style={{
+              position: "absolute", inset: 0, display: "flex", alignItems: "center",
+              justifyContent: "center", fontSize: 11, fontWeight: 700, color: colors.success
+            }}>
+              {Math.round(progressPercent)}%
+            </div>
+          </div>
+        </div>
+        <p style={{ fontSize: 9, color: colors.textLight, margin: "8px 0 0 0" }}>💡 {advice}</p>
+      </motion.div>
+
+      <div style={{ flex: 1 }} />
+    </div>
+  );
+}
+
+function ChatPageNew({ messages, loading, onSend, onSendImage, onBack, kisanNaam }) {
+  const [input, setInput] = useState("");
+  const [recording, setRecording] = useState(false);
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: `url(/public/chatpage-bg.png)`,
+      backgroundSize: "cover", backgroundPosition: "center",
+      display: "flex", flexDirection: "column"
+    }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.3))", pointerEvents: "none" }} />
+
+      {/* HEADER */}
+      <div style={{
+        position: "relative", zIndex: 10, background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(8px)",
+        borderBottom: `1px solid ${colors.border}`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12
+      }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <ArrowLeft size={20} color={colors.darkGreen} />
+        </button>
+        <div>
+          <h2 style={{ margin: 0, color: colors.darkGreen, fontSize: 15, fontWeight: 700 }}>AI Saathi</h2>
+          <p style={{ margin: "2px 0 0 0", color: colors.textLight, fontSize: 10 }}>Your Farming Assistant</p>
+        </div>
+      </div>
+
+      {/* CHAT MESSAGES */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: 8, position: "relative", zIndex: 2 }}>
+        {messages.length === 0 && (
+          <div style={{
+            textAlign: "center", padding: "20px", color: colors.text,
+            background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+            borderRadius: 14, border: `1px solid ${colors.border}`
+          }}>
+            <p style={{ fontSize: 12, margin: 0, lineHeight: 1.6 }}>Namaste! Koi bhi sawaal poochho ya fasal ki photo bhejo.</p>
+          </div>
+        )}
+
+        {messages.map((msg, i) => (
+          <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            style={{
+              display: "flex", justifyContent: msg.role === "user" ? "flex-end" : "flex-start"
+            }}>
+            <div style={{
+              maxWidth: "75%", padding: "9px 13px", borderRadius: msg.role === "user" ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
+              background: msg.role === "user" ? colors.darkGreen : `rgba(255, 255, 255, 0.85)`,
+              backdropFilter: "blur(6px)", color: msg.role === "user" ? "white" : colors.text,
+              fontSize: 12, lineHeight: 1.5, border: msg.role === "user" ? "none" : `1px solid ${colors.border}`
+            }}>
+              {msg.content}
+            </div>
+          </motion.div>
+        ))}
+
+        {loading && (
+          <div style={{ display: "flex", justifyContent: "flex-start" }}>
+            <div style={{
+              padding: "9px 13px", borderRadius: "16px 16px 16px 4px",
+              background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+              color: colors.text, fontSize: 12, border: `1px solid ${colors.border}`
+            }}>
+              <Loader size={14} style={{ animation: "spin 1s linear infinite" }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* INPUT */}
+      <div style={{
+        position: "relative", zIndex: 10, background: `rgba(255, 255, 255, 0.9)`, backdropFilter: "blur(8px)",
+        borderTop: `1px solid ${colors.border}`, padding: "8px 12px", display: "flex", alignItems: "center", gap: 8
+      }}>
+        <input value={input} onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && (input.trim() ? onSend(input) : null)}
+          placeholder="Type message..." style={{
+            flex: 1, padding: "8px 12px", borderRadius: 20, border: `1px solid ${colors.border}`,
+            background: "white", color: colors.text, fontSize: 12, outline: "none", fontFamily: "Inter, sans-serif"
+          }} />
+        <motion.button whileTap={{ scale: 0.9 }}
+          onClick={() => { if (input.trim()) onSend(input); setInput(""); }}
+          style={{
+            background: colors.darkGreen, color: "white", border: "none", borderRadius: "50%",
+            width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer"
+          }}>
+          <Send size={14} />
+        </motion.button>
+      </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
+    </div>
+  );
+}
+
+function CommunityPageNew({ onBack, db, kisanNaam, phone }) {
+  const [posts, setPosts] = useState([]);
+  const [newPost, setNewPost] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const q = query(collection(db, "community_posts"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, snap => {
+      setPosts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoading(false);
+    }, () => setLoading(false));
+    return unsub;
+  }, [db]);
+
+  const submitPost = async () => {
+    if (!newPost.trim()) return;
+    await addDoc(collection(db, "community_posts"), {
+      text: newPost.trim(), author: kisanNaam, authorPhone: phone,
+      likes: [], createdAt: serverTimestamp()
+    });
+    setNewPost("");
+  };
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: `url(/public/community-bg.png)`,
+      backgroundSize: "cover", backgroundPosition: "center",
+      display: "flex", flexDirection: "column"
+    }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.2))", pointerEvents: "none" }} />
+
+      {/* HEADER */}
+      <div style={{
+        position: "relative", zIndex: 10, background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(8px)",
+        borderBottom: `1px solid ${colors.border}`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12
+      }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <ArrowLeft size={20} color={colors.darkGreen} />
+        </button>
+        <h2 style={{ margin: 0, color: colors.darkGreen, fontSize: 15, fontWeight: 700, flex: 1 }}>Kisan Samuday</h2>
+      </div>
+
+      {/* POST FORM */}
+      <div style={{
+        position: "relative", zIndex: 5, padding: "12px 14px", background: `rgba(255, 255, 255, 0.75)`,
+        backdropFilter: "blur(6px)", borderBottom: `1px solid ${colors.border}`
+      }}>
+        <textarea value={newPost} onChange={e => setNewPost(e.target.value)}
+          placeholder="Apna tajurba share karo..." rows={2} style={{
+            width: "100%", padding: "10px 12px", borderRadius: 10, border: `1px solid ${colors.border}`,
+            background: "white", color: colors.text, fontSize: 12, outline: "none", resize: "none",
+            boxSizing: "border-box", fontFamily: "Inter, sans-serif"
+          }} />
+        <motion.button whileTap={{ scale: 0.95 }} onClick={submitPost}
+          style={{
+            marginTop: 6, background: colors.darkGreen, color: "white", border: "none", borderRadius: 8,
+            padding: "8px 16px", fontSize: 11, fontWeight: 600, cursor: "pointer"
+          }}>
+          Post Karo
+        </motion.button>
+      </div>
+
+      {/* POSTS */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", position: "relative", zIndex: 2, display: "flex", flexDirection: "column", gap: 8 }}>
+        {loading && <div style={{ textAlign: "center", padding: 20, color: colors.text }}>Loading...</div>}
+        {!loading && posts.length === 0 && (
+          <div style={{ textAlign: "center", padding: 20, color: colors.textLight }}>Koi post nahi hai abhi</div>
+        )}
+        {posts.map(post => (
+          <motion.div key={post.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+              border: `1px solid ${colors.border}`, borderRadius: 12, padding: "10px 12px"
+            }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: colors.darkGreen }}>{post.author}</span>
+              <span style={{ fontSize: 9, color: colors.textLight }}>recently</span>
+            </div>
+            <p style={{ fontSize: 12, color: colors.text, margin: "0 0 8px 0", lineHeight: 1.5 }}>{post.text}</p>
+            <button style={{
+              background: "none", border: "none", cursor: "pointer", fontSize: 11,
+              color: colors.textLight, display: "flex", alignItems: "center", gap: 4, padding: 0
+            }}>
+              <Heart size={12} /> {post.likes?.length || 0}
+            </button>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProfilePageNew({ onBack, kisanNaam, phone, shehar, fasal, beejDate, points, streak, onLogout, onChangeFasal }) {
+  return (
+    <div style={{
+      minHeight: "100vh", background: `url(/public/profile-bg.png)`,
+      backgroundSize: "cover", backgroundPosition: "center",
+      display: "flex", flexDirection: "column"
+    }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.3))", pointerEvents: "none" }} />
+
+      {/* HEADER */}
+      <div style={{
+        position: "relative", zIndex: 10, background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(8px)",
+        borderBottom: `1px solid ${colors.border}`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12
+      }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <ArrowLeft size={20} color={colors.darkGreen} />
+        </button>
+        <h2 style={{ margin: 0, color: colors.darkGreen, fontSize: 15, fontWeight: 700, flex: 1 }}>Mera Profile</h2>
+      </div>
+
+      {/* CONTENT */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, position: "relative", zIndex: 2 }}>
+        {/* PROFILE CARD */}
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          style={{
+            background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+            border: `1px solid ${colors.border}`, borderRadius: 16, padding: "16px", textAlign: "center"
+          }}>
+          <div style={{ width: 50, height: 50, borderRadius: "50%", background: colors.darkGreen, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: "white" }}>
+            <User size={24} />
+          </div>
+          <h3 style={{ margin: "0 0 4px 0", color: colors.darkGreen, fontSize: 16, fontWeight: 700 }}>{kisanNaam}</h3>
+          <p style={{ margin: "2px 0", color: colors.textLight, fontSize: 11 }}>📱 {phone}</p>
+          <p style={{ margin: "2px 0 12px 0", color: colors.textLight, fontSize: 11 }}>📍 {shehar}</p>
+          <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+            <span style={{ background: colors.success + "22", border: `1px solid ${colors.success}`, borderRadius: 20, padding: "3px 10px", fontSize: 10, color: colors.success, fontWeight: 600 }}>
+              ⭐ {streak} streak
+            </span>
+            <span style={{ background: colors.gold + "22", border: `1px solid ${colors.gold}`, borderRadius: 20, padding: "3px 10px", fontSize: 10, color: colors.gold, fontWeight: 600 }}>
+              ✨ {points} pts
+            </span>
+          </div>
+        </motion.div>
+
+        {/* FASAL INFO */}
+        <div style={{
+          background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+          border: `1px solid ${colors.border}`, borderRadius: 14, padding: "12px", position: "relative", zIndex: 2
+        }}>
+          <p style={{ margin: "0 0 8px 0", fontSize: 11, fontWeight: 700, color: colors.darkGreen }}>Meri Fasal</p>
+          <p style={{ margin: "0 0 4px 0", fontSize: 13, color: colors.text, fontWeight: 600 }}>{fasal}</p>
+          <button onClick={onChangeFasal} style={{
+            marginTop: 8, background: colors.darkGreen, color: "white", border: "none", borderRadius: 8,
+            padding: "6px 12px", fontSize: 11, fontWeight: 600, cursor: "pointer", width: "100%"
+          }}>
+            Change Fasal
+          </button>
+        </div>
+
+        {/* LOGOUT */}
+        <motion.button whileTap={{ scale: 0.95 }} onClick={onLogout}
+          style={{
+            background: colors.danger + "22", border: `1px solid ${colors.danger}`, color: colors.danger,
+            borderRadius: 12, padding: "12px", cursor: "pointer", fontSize: 12, fontWeight: 600, marginTop: 4
+          }}>
+          <LogOut size={14} style={{ display: "inline", marginRight: 6 }} />
+          Logout
+        </motion.button>
+      </div>
+    </div>
+  );
+}
+
+function WeatherPageNew({ onBack, weather, forecast, shehar }) {
+  return (
+    <div style={{
+      minHeight: "100vh", background: `url(/public/weather-bg.png)`,
+      backgroundSize: "cover", backgroundPosition: "center",
+      display: "flex", flexDirection: "column"
+    }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.3))", pointerEvents: "none" }} />
+
+      {/* HEADER */}
+      <div style={{
+        position: "relative", zIndex: 10, background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(8px)",
+        borderBottom: `1px solid ${colors.border}`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12
+      }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <ArrowLeft size={20} color={colors.darkGreen} />
+        </button>
+        <h2 style={{ margin: 0, color: colors.darkGreen, fontSize: 15, fontWeight: 700, flex: 1 }}>Weather</h2>
+      </div>
+
+      {/* CONTENT */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", position: "relative", zIndex: 2, display: "flex", flexDirection: "column", gap: 10 }}>
+        {weather ? (
+          <>
+            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+              style={{
+                background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+                border: `1px solid ${colors.border}`, borderRadius: 16, padding: "20px", textAlign: "center"
+              }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: 11, color: colors.textLight }}>📍 {weather.city || shehar}</p>
+              <div style={{ fontSize: 48, margin: "0 0 12px 0" }}>
+                {weather.id < 300 && "⛈️"}
+                {weather.id >= 300 && weather.id < 500 && "🌦️"}
+                {weather.id >= 500 && weather.id < 600 && "🌧️"}
+                {weather.id >= 600 && weather.id < 700 && "❄️"}
+                {weather.id >= 700 && weather.id < 800 && "🌫️"}
+                {weather.id === 800 && "☀️"}
+                {weather.id > 800 && "⛅"}
+              </div>
+              <h1 style={{ margin: 0, fontSize: 42, fontWeight: 700, color: colors.darkGreen }}>{weather.temp}°C</h1>
+              <p style={{ margin: "8px 0 0 0", fontSize: 12, color: colors.text }}>{weather.description}</p>
+            </motion.div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{
+                background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+                border: `1px solid ${colors.border}`, borderRadius: 12, padding: "12px", textAlign: "center"
+              }}>
+                <Droplets size={18} color={colors.darkGreen} style={{ margin: "0 auto 6px" }} />
+                <p style={{ margin: "0 0 4px 0", fontSize: 13, fontWeight: 700, color: colors.darkGreen }}>{weather.humidity}%</p>
+                <p style={{ margin: 0, fontSize: 9, color: colors.textLight }}>Humidity</p>
+              </div>
+              <div style={{
+                background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+                border: `1px solid ${colors.border}`, borderRadius: 12, padding: "12px", textAlign: "center"
+              }}>
+                <Cloud size={18} color={colors.darkGreen} style={{ margin: "0 auto 6px" }} />
+                <p style={{ margin: "0 0 4px 0", fontSize: 13, fontWeight: 700, color: colors.darkGreen }}>{weather.wind} m/s</p>
+                <p style={{ margin: 0, fontSize: 9, color: colors.textLight }}>Wind Speed</p>
+              </div>
+            </div>
+
+            {forecast.length > 0 && (
+              <div style={{
+                background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+                border: `1px solid ${colors.border}`, borderRadius: 14, padding: "12px"
+              }}>
+                <p style={{ margin: "0 0 10px 0", fontSize: 11, fontWeight: 700, color: colors.darkGreen }}>3-Day Forecast</p>
+                {forecast.map((f, i) => (
+                  <div key={i} style={{
+                    display: "flex", justifyContent: "space-between", alignItems: "center",
+                    padding: "8px 0", borderBottom: i < forecast.length - 1 ? `1px solid ${colors.border}` : "none"
+                  }}>
+                    <span style={{ fontSize: 11, color: colors.text }}>{f.date}</span>
+                    <span style={{ fontSize: 14 }}>
+                      {f.id < 300 && "⛈️"}
+                      {f.id >= 300 && f.id < 500 && "🌦️"}
+                      {f.id >= 500 && f.id < 600 && "🌧️"}
+                      {f.id >= 600 && f.id < 700 && "❄️"}
+                      {f.id >= 700 && f.id < 800 && "🌫️"}
+                      {f.id === 800 && "☀️"}
+                      {f.id > 800 && "⛅"}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: colors.darkGreen }}>{f.temp}°C</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <div style={{ textAlign: "center", padding: 40, color: colors.text }}>Loading weather...</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function YojnaPageNew({ onBack }) {
+  const yojnas = [
+    { name: "PM Kisan", icon: "💰", description: "₹6000 annually" },
+    { name: "Fasal Bima", icon: "🛡️", description: "Crop insurance" },
+    { name: "KCC", icon: "💳", description: "Kisan Credit Card" },
+    { name: "Meri Fasal", icon: "📋", description: "Haryana portal" },
+  ];
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: `url(/public/yojna-bg.png)`,
+      backgroundSize: "cover", backgroundPosition: "center",
+      display: "flex", flexDirection: "column"
+    }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.2))", pointerEvents: "none" }} />
+
+      {/* HEADER */}
+      <div style={{
+        position: "relative", zIndex: 10, background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(8px)",
+        borderBottom: `1px solid ${colors.border}`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12
+      }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <ArrowLeft size={20} color={colors.darkGreen} />
+        </button>
+        <h2 style={{ margin: 0, color: colors.darkGreen, fontSize: 15, fontWeight: 700, flex: 1 }}>Sarkari Yojnayen</h2>
+      </div>
+
+      {/* YOJNAS */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", position: "relative", zIndex: 2, display: "flex", flexDirection: "column", gap: 10 }}>
+        {yojnas.map((y, i) => (
+          <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+              border: `1px solid ${colors.border}`, borderRadius: 14, padding: "12px", cursor: "pointer"
+            }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <span style={{ fontSize: 20 }}>{y.icon}</span>
+              <div style={{ flex: 1 }}>
+                <h4 style={{ margin: "0 0 4px 0", fontSize: 12, fontWeight: 700, color: colors.darkGreen }}>{y.name}</h4>
+                <p style={{ margin: 0, fontSize: 11, color: colors.textLight }}>{y.description}</p>
+              </div>
+              <ChevronRight size={14} color={colors.textLight} />
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MandiBhavPageNew({ onBack }) {
+  const mandis = [
+    { crop: "Wheat", price: "₹2,135", trend: "↑ 32" },
+    { crop: "Paddy", price: "₹2,045", trend: "↑ 18" },
+    { crop: "Cotton", price: "₹6,850", trend: "↓ 25" },
+  ];
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: `url(/public/mandibhav-bg.png)`,
+      backgroundSize: "cover", backgroundPosition: "center",
+      display: "flex", flexDirection: "column"
+    }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.2))", pointerEvents: "none" }} />
+
+      {/* HEADER */}
+      <div style={{
+        position: "relative", zIndex: 10, background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(8px)",
+        borderBottom: `1px solid ${colors.border}`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12
+      }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <ArrowLeft size={20} color={colors.darkGreen} />
+        </button>
+        <h2 style={{ margin: 0, color: colors.darkGreen, fontSize: 15, fontWeight: 700, flex: 1 }}>Mandi Bhav</h2>
+      </div>
+
+      {/* PRICES */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", position: "relative", zIndex: 2, display: "flex", flexDirection: "column", gap: 8 }}>
+        {mandis.map((m, i) => (
+          <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+            style={{
+              background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+              border: `1px solid ${colors.border}`, borderRadius: 12, padding: "12px",
+              display: "flex", justifyContent: "space-between", alignItems: "center"
+            }}>
+            <div>
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: colors.darkGreen }}>{m.crop}</p>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: colors.darkGreen }}>{m.price}</p>
+              <p style={{ margin: "2px 0 0 0", fontSize: 10, color: m.trend.includes("↑") ? colors.success : colors.danger }}>
+                {m.trend}
+              </p>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function KhataPageNew({ phone, onBack, db }) {
   const [entries, setEntries] = useState([]);
   const [category, setCategory] = useState("Dawaai");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState("kharcha");
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!phone) return;
     getDoc(doc(db, "kisans", phone)).then(snap => {
       if (snap.exists()) setEntries(snap.data().khata || []);
-      setLoading(false);
     });
-  }, [phone]);
+  }, [phone, db]);
 
   const addEntry = async () => {
-    if (!amount || isNaN(amount)) return;
+    if (!amount) return;
     const entry = { id: Date.now(), category, amount: parseInt(amount), type, date: new Date().toLocaleDateString("hi-IN") };
     const updated = [entry, ...entries];
     setEntries(updated);
@@ -173,125 +840,104 @@ function KhataPage({ phone, onBack }) {
   const totalKamai = entries.filter(e => e.type === "kamai").reduce((s, e) => s + e.amount, 0);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#050d1a", display: "flex", flexDirection: "column" }}>
-      <div style={{ background: "#071528", borderBottom: "1px solid rgba(100,180,255,0.15)", padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#7dffaa", fontSize: 20, cursor: "pointer" }}>←</button>
-        <span style={{ color: "#7dffaa", fontWeight: "bold", fontSize: 16 }}>📒 Kisan Khata</span>
+    <div style={{
+      minHeight: "100vh", background: `url(/public/profile-bg.png)`,
+      backgroundSize: "cover", backgroundPosition: "center",
+      display: "flex", flexDirection: "column"
+    }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.05), rgba(0,0,0,0.3))", pointerEvents: "none" }} />
+
+      {/* HEADER */}
+      <div style={{
+        position: "relative", zIndex: 10, background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(8px)",
+        borderBottom: `1px solid ${colors.border}`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12
+      }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
+          <ArrowLeft size={20} color={colors.darkGreen} />
+        </button>
+        <h2 style={{ margin: 0, color: colors.darkGreen, fontSize: 15, fontWeight: 700, flex: 1 }}>Kisan Khata</h2>
       </div>
-      <div style={{ display: "flex", gap: 8, padding: "10px 10px 0" }}>
-        {[["Total Kharcha", totalKharcha, "#ff6666"], ["Total Kamai", totalKamai, "#7dffaa"], ["Net", totalKamai - totalKharcha, totalKamai - totalKharcha >= 0 ? "#7dffaa" : "#ff6666"]].map(([label, val, color]) => (
-          <div key={label} style={{ flex: 1, background: "rgba(100,180,255,0.07)", borderRadius: 12, padding: 10, border: "1px solid rgba(100,180,255,0.13)", textAlign: "center" }}>
-            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>{label}</div>
-            <div style={{ fontSize: 16, fontWeight: "bold", color }}>{val < 0 ? "-" : ""}₹{Math.abs(val).toLocaleString()}</div>
+
+      {/* SUMMARY */}
+      <div style={{ position: "relative", zIndex: 5, display: "flex", gap: 8, padding: "10px", background: `rgba(255, 255, 255, 0.75)`, backdropFilter: "blur(6px)", borderBottom: `1px solid ${colors.border}` }}>
+        <div style={{ flex: 1, background: "white", borderRadius: 10, padding: 8, textAlign: "center", border: `1px solid ${colors.border}` }}>
+          <p style={{ margin: 0, fontSize: 9, color: colors.textLight }}>Kharcha</p>
+          <p style={{ margin: "4px 0 0 0", fontSize: 12, fontWeight: 700, color: colors.danger }}>₹{totalKharcha}</p>
+        </div>
+        <div style={{ flex: 1, background: "white", borderRadius: 10, padding: 8, textAlign: "center", border: `1px solid ${colors.border}` }}>
+          <p style={{ margin: 0, fontSize: 9, color: colors.textLight }}>Kamai</p>
+          <p style={{ margin: "4px 0 0 0", fontSize: 12, fontWeight: 700, color: colors.success }}>₹{totalKamai}</p>
+        </div>
+      </div>
+
+      {/* ENTRIES */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 14px", position: "relative", zIndex: 2 }}>
+        {entries.length === 0 && (
+          <div style={{ textAlign: "center", padding: 20, color: colors.textLight }}>Abhi koi entry nahi</div>
+        )}
+        {entries.map(e => (
+          <div key={e.id} style={{
+            background: `rgba(255, 255, 255, 0.85)`, backdropFilter: "blur(6px)",
+            border: `1px solid ${colors.border}`, borderRadius: 10, padding: "10px 12px", marginBottom: 8,
+            display: "flex", justifyContent: "space-between"
+          }}>
+            <div>
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: colors.text }}>{e.category}</p>
+              <p style={{ margin: "2px 0 0 0", fontSize: 9, color: colors.textLight }}>{e.date}</p>
+            </div>
+            <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: e.type === "kharcha" ? colors.danger : colors.success }}>
+              {e.type === "kharcha" ? "-" : "+"}₹{e.amount}
+            </p>
           </div>
         ))}
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "8px 10px" }}>
-        {loading ? <div style={{ textAlign: "center", padding: 20, color: "#7dffaa" }}>⏳ Loading...</div> :
-          entries.length === 0 ? <div style={{ textAlign: "center", padding: 30, color: "rgba(100,180,255,0.5)" }}>Abhi koi entry nahi hai</div> :
-          entries.map(e => (
-            <div key={e.id} style={{ background: "rgba(100,180,255,0.07)", borderRadius: 12, padding: "10px 14px", margin: "6px 0", border: `1px solid ${e.type === "kharcha" ? "rgba(255,100,100,0.3)" : "rgba(100,255,150,0.3)"}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontWeight: "bold", color: "#fff", fontSize: 13 }}>{e.category}</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{e.date}</div>
-              </div>
-              <div style={{ fontWeight: "bold", fontSize: 15, color: e.type === "kharcha" ? "#ff6666" : "#7dffaa" }}>
-                {e.type === "kharcha" ? "-" : "+"}₹{e.amount.toLocaleString()}
-              </div>
-            </div>
-          ))
-        }
-      </div>
-      <div style={{ background: "rgba(7,21,40,0.97)", borderTop: "1px solid rgba(100,180,255,0.12)", padding: 10 }}>
+
+      {/* ADD FORM */}
+      <div style={{
+        position: "relative", zIndex: 10, background: `rgba(255, 255, 255, 0.9)`, backdropFilter: "blur(8px)",
+        borderTop: `1px solid ${colors.border}`, padding: "10px 12px"
+      }}>
         <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
-          {["kharcha", "kamai"].map(t => (
-            <button key={t} onClick={() => setType(t)} style={{ flex: 1, padding: 8, borderRadius: 10, border: "none", background: type === t ? (t === "kharcha" ? "#c0392b" : "#2d8a2d") : "rgba(100,180,255,0.1)", color: type === t ? "white" : "rgba(255,255,255,0.5)", fontWeight: "bold", cursor: "pointer", fontSize: 13 }}>
-              {t === "kharcha" ? "− Kharcha" : "+ Kamai"}
-            </button>
-          ))}
+          <button onClick={() => setType("kharcha")} style={{
+            flex: 1, padding: 8, borderRadius: 10, border: "none",
+            background: type === "kharcha" ? colors.danger : "white", color: type === "kharcha" ? "white" : colors.text,
+            fontSize: 11, fontWeight: 700, cursor: "pointer"
+          }}>
+            Kharcha
+          </button>
+          <button onClick={() => setType("kamai")} style={{
+            flex: 1, padding: 8, borderRadius: 10, border: "none",
+            background: type === "kamai" ? colors.success : "white", color: type === "kamai" ? "white" : colors.text,
+            fontSize: 11, fontWeight: 700, cursor: "pointer"
+          }}>
+            Kamai
+          </button>
         </div>
-        <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: "100%", padding: "9px 12px", borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.07)", color: "#fff", fontSize: 13, marginBottom: 8, outline: "none" }}>
-          {["Dawaai","Beej","Khad/Urea","Mazdoori","Tractor","Mandi se kamai","Bijli bill","Kuch aur"].map(c => <option key={c} style={{ background: "#071528" }}>{c}</option>)}
-        </select>
         <div style={{ display: "flex", gap: 8 }}>
-          <input value={amount} onChange={e => setAmount(e.target.value.replace(/\D/g, ""))} placeholder="Amount ₹" type="number"
-            style={{ flex: 1, padding: "9px 12px", borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.07)", color: "#fff", fontSize: 13, outline: "none" }}
-            onKeyDown={e => e.key === "Enter" && addEntry()} />
-          <button onClick={addEntry} style={{ background: "#1e90ff", color: "white", border: "none", borderRadius: 10, padding: "9px 18px", fontWeight: "bold", cursor: "pointer", fontSize: 14 }}>Add</button>
+          <input value={amount} onChange={e => setAmount(e.target.value.replace(/\D/g, ""))}
+            placeholder="Amount" type="number" style={{
+              flex: 1, padding: "8px 12px", borderRadius: 10, border: `1px solid ${colors.border}`,
+              background: "white", color: colors.text, fontSize: 11, outline: "none", fontFamily: "Inter, sans-serif"
+            }} />
+          <motion.button whileTap={{ scale: 0.95 }} onClick={addEntry} style={{
+            background: colors.darkGreen, color: "white", border: "none", borderRadius: 10,
+            padding: "8px 14px", fontSize: 11, fontWeight: 700, cursor: "pointer"
+          }}>
+            Add
+          </motion.button>
         </div>
       </div>
     </div>
   );
 }
 
-function MandiBhavPage({ onBack }) {
-  const [location, setLocation] = useState("");
-  const [bhav, setBhav] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-
-  const getMandiBhav = async () => {
-    if (!location.trim()) return;
-    setLoading(true); setSearched(true);
-    try {
-      const res = await fetch(`https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070?api-key=${process.env.REACT_APP_MANDI_KEY}&format=json&filters[district]=${encodeURIComponent(location)}&limit=20`);
-      const data = await res.json();
-      setBhav(data.records && data.records.length > 0 ? data.records : []);
-    } catch { setBhav([]); }
-    setLoading(false);
-  };
-
-  return (
-    <div style={{ minHeight: "100vh", background: "#050d1a", display: "flex", flexDirection: "column" }}>
-      <div style={{ background: "#071528", borderBottom: "1px solid rgba(100,180,255,0.15)", padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#7dffaa", fontSize: 20, cursor: "pointer" }}>←</button>
-        <span style={{ color: "#7dffaa", fontWeight: "bold", fontSize: 16 }}>📊 Mandi Bhav — Haryana</span>
-      </div>
-      <div style={{ padding: "12px 10px" }}>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input value={location} onChange={e => setLocation(e.target.value)} placeholder="District likhein (jaise: Jind, Kaithal, Karnal)"
-            style={{ flex: 1, padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(100,180,255,0.2)", background: "rgba(100,180,255,0.07)", color: "#fff", fontSize: 13, outline: "none" }}
-            onKeyDown={e => e.key === "Enter" && getMandiBhav()} />
-          <button onClick={getMandiBhav} style={{ background: "#1e90ff", color: "white", border: "none", borderRadius: 10, padding: "10px 16px", fontWeight: "bold", cursor: "pointer" }}>🔍</button>
-        </div>
-        <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-          {["Jind","Kaithal","Karnal","Hisar","Rohtak"].map(m => (
-            <button key={m} onClick={() => setLocation(m)} style={{ padding: "4px 10px", borderRadius: 20, border: "1px solid rgba(100,180,255,0.25)", background: "rgba(100,180,255,0.08)", color: "#7dffaa", fontSize: 11, cursor: "pointer" }}>{m}</button>
-          ))}
-        </div>
-      </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "0 10px" }}>
-        {loading && <div style={{ textAlign: "center", padding: 30, color: "#7dffaa" }}>⏳ Bhav dhundh raha hoon...</div>}
-        {!loading && searched && bhav.length === 0 && <div style={{ textAlign: "center", padding: 30, color: "rgba(255,255,255,0.4)" }}>😕 Is district ka bhav nahi mila</div>}
-        {bhav.map((b, i) => (
-          <div key={i} style={{ background: "rgba(100,180,255,0.07)", borderRadius: 12, padding: "10px 14px", margin: "6px 0", border: "1px solid rgba(100,180,255,0.13)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <div>
-                <div style={{ fontWeight: "bold", color: "#fff", fontSize: 13 }}>{b.commodity}</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>📍 {b.market} | {b.arrival_date}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontWeight: "bold", color: "#7dffaa", fontSize: 14 }}>₹{b.modal_price}/q</div>
-                <div style={{ fontSize: 10, color: "rgba(255,255,255,0.35)" }}>Min: ₹{b.min_price} | Max: ₹{b.max_price}</div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div style={{ padding: "8px 12px", background: "rgba(7,21,40,0.97)", borderTop: "1px solid rgba(100,180,255,0.1)" }}>
-        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", textAlign: "center" }}>⚠️ Bhav thoda upar neeche ho sakta hai — mandi jaane se pehle confirm karein</div>
-      </div>
-    </div>
-  );
-}
-
+// MAIN APP
 function App() {
   const [screen, setScreen] = useState("splash");
   const [page, setPage] = useState("main");
   const [phone, setPhone] = useState("");
   const [kisanNaam, setKisanNaam] = useState("");
   const [shehar, setShehar] = useState("");
-  const [sheharSuggestions, setSheharSuggestions] = useState([]);
   const [fasal, setFasal] = useState("");
   const [beejDate, setBeejDate] = useState("");
   const [messages, setMessages] = useState([]);
@@ -305,27 +951,10 @@ function App() {
   const [userStreak, setUserStreak] = useState(0);
 
   useEffect(() => {
-    const handleBackButton = () => {
-      if (page !== "main") {
-        setPage("main");
-        window.history.pushState(null, "", window.location.href);
-      } else if (screen === "main") {
-        if (window.confirm("Kya aap app band karna chahte hain?")) {
-          window.history.back();
-        } else {
-          window.history.pushState(null, "", window.location.href);
-        }
-      }
-    };
-    window.history.pushState(null, "", window.location.href);
-    window.addEventListener("popstate", handleBackButton);
-    return () => window.removeEventListener("popstate", handleBackButton);
-  }, [page, screen]);
-
-  useEffect(() => {
     const savedPhone = localStorage.getItem("kisan_phone");
     if (savedPhone) {
-      setPhone(savedPhone); setDbLoading(true);
+      setPhone(savedPhone);
+      setDbLoading(true);
       getDoc(doc(db, "kisans", savedPhone)).then(snap => {
         if (snap.exists()) {
           const data = snap.data();
@@ -333,73 +962,44 @@ function App() {
           setShehar(data.shehar || "");
           setFasal(data.fasal || "");
           setBeejDate(data.beejDate || "");
-          setMessages([]);
           setUserPoints(data.points || 0);
           setUserStreak(data.streak || 0);
           if (data.fasal && data.beejDate) setScreen("main");
           else setScreen("fasal");
         }
         setDbLoading(false);
-      }).catch(() => setDbLoading(false));
+      });
     } else {
       setTimeout(() => setScreen("phone"), 2500);
     }
   }, []);
 
   useEffect(() => {
-    if (phone && screen === "main") {
-      setupNotifications(app, db, phone);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phone, screen]);
-
-  useEffect(() => {
     if (shehar && screen === "main") {
       const city = shehar.split(",")[0].trim();
-      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city},IN&appid=${process.env.REACT_APP_WEATHER_KEY}&units=metric&lang=hi`)
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city},IN&appid=${process.env.REACT_APP_WEATHER_KEY}&units=metric`)
         .then(r => r.json()).then(data => {
           if (data?.main) setWeather({ temp: Math.round(data.main.temp), humidity: data.main.humidity, description: data.weather[0].description, id: data.weather[0].id, wind: Math.round(data.wind.speed), city: data.name });
-        }).catch(() => {});
-      fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city},IN&appid=${process.env.REACT_APP_WEATHER_KEY}&units=metric&lang=hi`)
-        .then(r => r.json()).then(data => {
-          if (data?.list) {
-            const today = new Date().toDateString();
-            const seenDates = new Set([today]);
-            const dailyForecasts = [];
-
-            for (const d of data.list) {
-              const entryDate = new Date(d.dt * 1000);
-              const dateStr = entryDate.toDateString();
-              const hour = entryDate.getHours();
-
-              if (!seenDates.has(dateStr) && (hour >= 11 && hour <= 15)) {
-                seenDates.add(dateStr);
-                dailyForecasts.push({
-                  date: entryDate.toLocaleDateString("hi-IN", { weekday: "short", day: "numeric" }),
-                  temp: Math.round(d.main.temp),
-                  desc: d.weather[0].description,
-                  id: d.weather[0].id
-                });
-              }
-              if (dailyForecasts.length === 3) break;
-            }
-            setForecast(dailyForecasts);
-          }
         }).catch(() => {});
     }
   }, [shehar, screen]);
 
-  const fetchSuggestions = async (val) => {
-    if (val.length < 2) { setSheharSuggestions([]); return; }
-    try {
-      const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${val},IN&limit=5&appid=${process.env.REACT_APP_WEATHER_KEY}`);
-      const data = await res.json();
-      if (Array.isArray(data)) setSheharSuggestions([...new Set(data.map(d => `${d.name}${d.state ? ", " + d.state : ""}`))]);
-    } catch { setSheharSuggestions([]); }
+  const din = beejDate ? Math.floor((new Date() - new Date(beejDate)) / (1000 * 60 * 60 * 24)) : 0;
+
+  const getStage = () => {
+    if (fasal === "Chawal (Rice)") {
+      if (din <= 25) return { stage: "Nursery Stage", advice: "Roz paani do" };
+      if (din <= 50) return { stage: "Transplanting", advice: "2-3 inch paani rakho" };
+      if (din <= 80) return { stage: "Growth Stage", advice: "Urea lagao" };
+      if (din <= 110) return { stage: "Flowering", advice: "Paani zaroori hai" };
+      return { stage: "Harvesting", advice: "Fasal tayyar" };
+    }
+    return { stage: "Stage unknown", advice: "Sahi fasal chunein" };
   };
 
+  const { stage, advice } = getStage();
+
   const handlePhoneSubmit = async () => {
-    setError("");
     if (phone.length !== 10) { setError("10 digit number daalo!"); return; }
     setDbLoading(true);
     try {
@@ -420,284 +1020,151 @@ function App() {
         setScreen("fasal");
       }
     } catch (e) {
-      setError("Internet check karo, dobara try karo!");
+      setError("Internet check karo!");
     }
     setDbLoading(false);
   };
 
   const saveData = async (extra = {}) => {
     if (!phone) return;
-    try { await setDoc(doc(db, "kisans", phone), { phone, naam: kisanNaam, shehar, fasal, beejDate, ...extra }, { merge: true }); }
-    catch (e) { console.log(e); }
+    try {
+      await setDoc(doc(db, "kisans", phone), { phone, naam: kisanNaam, shehar, fasal, beejDate, ...extra }, { merge: true });
+    } catch (e) { }
   };
-
-  const din = beejDate ? Math.floor((new Date() - new Date(beejDate)) / (1000 * 60 * 60 * 24)) : 0;
-
-  const getStage = () => {
-    if (fasal === "🌾 Chawal (Rice)") {
-      if (din <= 25) return { stage: "🌱 Nursery Stage", advice: "Roz paani do. Peele patte dikhein to Zinc Sulphate spray karo" };
-      if (din <= 50) return { stage: "🌿 Transplanting Stage", advice: "Khet mein 2-3 inch paani rakho" };
-      if (din <= 80) return { stage: "🌾 Growth Stage", advice: "Pehli Urea — zameen ka size batao" };
-      if (din <= 110) return { stage: "🌸 Flowering Stage", advice: "Paani mat rokna — bahut zaroori hai" };
-      return { stage: "✂️ Harvesting Stage", advice: "Fasal taiyaar — paani band karo" };
-    }
-    if (fasal === "🌿 Gehun (Wheat)") {
-      if (din <= 21) return { stage: "🌱 Jamav Stage", advice: "Pehla paani do" };
-      if (din <= 45) return { stage: "🌿 Tillering Stage", advice: "Urea — zameen ka size batao" };
-      if (din <= 75) return { stage: "🌾 Growth Stage", advice: "Doosra paani do aur potash daalo" };
-      if (din <= 110) return { stage: "🌸 Bali Stage", advice: "Teesra paani do" };
-      return { stage: "✂️ Harvesting Stage", advice: "Gehun taiyaar" };
-    }
-    if (fasal === "🟡 Sarso (Mustard)") {
-      if (din <= 20) return { stage: "🌱 Jamav Stage", advice: "Halka paani do" };
-      if (din <= 45) return { stage: "🌿 Growth Stage", advice: "Urea aur keeton ki dawai" };
-      if (din <= 75) return { stage: "🌸 Phool Stage", advice: "Koi spray mat karo" };
-      return { stage: "✂️ Harvesting Stage", advice: "Sarso katne ka samay!" };
-    }
-    if (fasal === "🍬 Ganna (Sugarcane)") {
-      if (din <= 30) return { stage: "🌱 Jamav Stage", advice: "Halka paani do" };
-      if (din <= 90) return { stage: "🌿 Growth Stage", advice: "Urea — zameen ka size batao" };
-      if (din <= 180) return { stage: "🎋 Bhadai Stage", advice: "Potash daalo" };
-      if (din <= 270) return { stage: "🍬 Ripening Stage", advice: "Paani kam karo" };
-      return { stage: "✂️ Harvesting Stage", advice: "Mill se contact karo" };
-    }
-    return { stage: "Stage pata nahi", advice: "Sahi fasal chunein" };
-  };
-
-  const { stage, advice } = getStage();
-
-  const getWeatherIcon = (id) => {
-    if (!id) return "🌤️";
-    if (id < 300) return "⛈️"; if (id < 500) return "🌦️"; if (id < 600) return "🌧️";
-    if (id < 700) return "❄️"; if (id < 800) return "🌫️"; if (id === 800) return "☀️"; return "⛅";
-  };
-
-  const getWeatherAlert = () => {
-    if (!weather) return null;
-    if (weather.id >= 200 && weather.id < 600) {
-      if (stage.includes("Harvesting")) return "🚨 Baarish aa rahi hai! Aaj hi fasal kaatne ki koshish karein!";
-      if (stage.includes("Flowering")) return "⚠️ Baarish mein fungicide spray band karein!";
-      return "💧 Baarish ho rahi hai — aaj paani mat do!";
-    }
-    if (weather.temp > 42) return "🌡️ Bahut garmi — subah ya shaam paani do, dopahar nahi!";
-    if (weather.wind > 10) return "💨 Tej hawa — aaj spray karna rokein!";
-    return null;
-  };
-
-  const hour = new Date().getHours();
-  const isNight = hour < 6 || hour > 19;
-  const isRain = weather && weather.id >= 200 && weather.id < 600;
-  const windSpeed = weather?.wind || 0;
-  const alert = getWeatherAlert();
 
   const sendMessage = async (text) => {
-    if (!text || typeof text !== "string" || !text.trim()) return;
+    if (!text.trim()) return;
     const newMsgs = [...messages, { role: "user", content: text }];
-    setMessages(newMsgs); setLoading(true);
+    setMessages(newMsgs);
+    setLoading(true);
     try {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile", max_tokens: 200,
-          messages: [
-            { role: "system", content: `Tu ek experienced Indian agriculture expert hai. Kisan ka naam: ${kisanNaam || "Kisan"}, Fasal: ${fasal}, Stage: ${stage}, Din: ${din}. Mausam: ${weather ? `${weather.temp}°C, ${weather.description}` : "N/A"}.
-
-${getFullKnowledgeBase()}
-
-Rules: Hindi mein, 2-3 lines mein, aasan bhasha, zameen ka size poochhe bina matra mat batao. Upar diye gaye local terms aur units ka istemal samajhne ke liye karo.` },
-            ...newMsgs.slice(-10)
-          ]
+          messages: [...newMsgs.slice(-10)]
         })
       });
-      if (!res.ok) throw new Error("API Error");
       const data = await res.json();
       const jawab = data?.choices?.[0]?.message?.content;
-      if (!jawab) throw new Error("No response");
-      const updated = [...newMsgs, { role: "assistant", content: jawab }];
-      setMessages(updated);
+      if (jawab) setMessages([...newMsgs, { role: "assistant", content: jawab }]);
     } catch {
-      setMessages([...newMsgs, { role: "assistant", content: "Kuch dikkat aayi — dobara try karo!" }]);
+      setMessages([...newMsgs, { role: "assistant", content: "Dobara try karo!" }]);
     }
     setLoading(false);
-  };
-
-  const sendImageMessage = async (base64Image, userQuestion = "") => {
-    const newMsgs = [...messages, { role: "user", content: userQuestion || "Photo bheji", image: base64Image }];
-    setMessages(newMsgs);
-    setLoading(true);
-    try {
-      const promptText = userQuestion
-        ? `Tu ek experienced Indian agriculture expert hai. Is photo ko dekho — yeh fasal, patta, keeda, ya dawai/khad ki packet kuch bhi ho sakti hai. User ka sawaal hai: "${userQuestion}". Photo ke context mein iska jawab do — Hindi mein, 3-4 lines mein, aasan bhasha mein.`
-        : `Tu ek experienced Indian agriculture expert hai. Is photo ko pehle pehchano ki yeh kya hai:
-1) Agar yeh FASAL/PATTA hai — bimari ya nutrient deficiency batao, kaaran batao, treatment batao.
-2) Agar yeh DAWAI/KHAD ki packet/bottle hai — uska naam, active ingredient, kis cheez ke liye use hoti hai, aur sahi matra/dosage batao per acre.
-3) Agar dono mein se kuch nahi samajh aaye, to bolo dobara saaf photo bhejo.
-Hindi mein, 3-4 lines mein, aasan bhasha mein jawab do.`;
-
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${process.env.REACT_APP_GROQ_KEY}` },
-        body: JSON.stringify({
-          model: "meta-llama/llama-4-maverick-17b-128e-instruct",
-          max_tokens: 350,
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: promptText },
-                { type: "image_url", image_url: { url: base64Image } }
-              ]
-            }
-          ]
-        })
-      });
-      if (!res.ok) throw new Error("API Error");
-      const data = await res.json();
-      const jawab = data?.choices?.[0]?.message?.content;
-      if (!jawab) throw new Error("No response");
-      const updated = [...newMsgs, { role: "assistant", content: jawab }];
-      setMessages(updated);
-    } catch {
-      setMessages([...newMsgs, { role: "assistant", content: "Photo samajhne mein dikkat aayi — dobara saaf photo bhejo!" }]);
-    }
-    setLoading(false);
-  };
-
-  const handleOpenChat = (initMsg = "") => {
-    setPage("chat");
-    if (initMsg && typeof initMsg === "string" && initMsg.trim()) {
-      setTimeout(() => sendMessage(initMsg), 300);
-    }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("kisan_phone");
-    setScreen("phone"); setPhone(""); setKisanNaam("");
-    setShehar(""); setFasal(""); setBeejDate(""); setMessages([]);
-    setUserPoints(0); setUserStreak(0); setPage("main");
+    setScreen("phone");
+    setPhone("");
+    setKisanNaam("");
+    setShehar("");
+    setFasal("");
+    setBeejDate("");
+    setMessages([]);
+    setPage("main");
   };
 
-  const authStyle = { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "#0a0f0c", padding: 20, textAlign: "center" };
-  const inputStyle = { width: "85%", padding: "11px 15px", borderRadius: 10, border: "1px solid rgba(120,220,150,0.25)", background: "rgba(120,220,150,0.07)", color: "#fff", fontSize: 14, margin: "7px 0", outline: "none" };
-  const btnStyle = { background: "#1eb464", color: "white", border: "none", borderRadius: 10, padding: "11px 28px", fontSize: 15, fontWeight: "bold", cursor: "pointer", marginTop: 10, width: "85%" };
-
-  if (page === "chat") return <ChatPage messages={messages} loading={loading} onSend={sendMessage} onSendImage={sendImageMessage} onBack={() => setPage("main")} kisanNaam={kisanNaam || "Kisan"} />;
-  if (page === "khata") return <KhataPage phone={phone} onBack={() => setPage("main")} />;
-  if (page === "mandi") return <MandiBhavPage onBack={() => setPage("main")} />;
-  if (page === "quiz") return <QuizPage onBack={() => setPage("main")} db={db} phone={phone} kisanNaam={kisanNaam || "Kisan"} fasal={fasal} />;
-  if (page === "yojna") return <YojnaPage onBack={() => setPage("main")} />;
-  if (page === "weather") return <WeatherPage onBack={() => setPage("main")} weather={weather} forecast={forecast} getWeatherIcon={getWeatherIcon} shehar={shehar} />;
-  if (page === "profile") return <ProfilePage onBack={() => setPage("main")} kisanNaam={kisanNaam || "Kisan"} phone={phone} shehar={shehar} fasal={fasal} beejDate={beejDate} points={userPoints} streak={userStreak} onLogout={handleLogout} onChangeFasal={() => { setPage("main"); setScreen("fasal"); }} />;
-  if (page === "community") return <CommunityPage onBack={() => setPage("main")} db={db} kisanNaam={kisanNaam || "Kisan"} phone={phone} />;
+  if (page === "chat") return <ChatPageNew messages={messages} loading={loading} onSend={sendMessage} onSendImage={() => { }} onBack={() => setPage("main")} kisanNaam={kisanNaam} />;
+  if (page === "khata") return <KhataPageNew phone={phone} onBack={() => setPage("main")} db={db} />;
+  if (page === "mandi") return <MandiBhavPageNew onBack={() => setPage("main")} />;
+  if (page === "yojna") return <YojnaPageNew onBack={() => setPage("main")} />;
+  if (page === "weather") return <WeatherPageNew onBack={() => setPage("main")} weather={weather} forecast={forecast} shehar={shehar} />;
+  if (page === "profile") return <ProfilePageNew onBack={() => setPage("main")} kisanNaam={kisanNaam} phone={phone} shehar={shehar} fasal={fasal} beejDate={beejDate} points={userPoints} streak={userStreak} onLogout={handleLogout} onChangeFasal={() => { setPage("main"); setScreen("fasal"); }} />;
+  if (page === "community") return <CommunityPageNew onBack={() => setPage("main")} db={db} kisanNaam={kisanNaam} phone={phone} />;
 
   if (screen === "splash" || (dbLoading && !kisanNaam)) return (
-    <motion.div style={authStyle} initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
-      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} transition={{ delay: 0.3, type: "spring" }} style={{ fontSize: 80 }}>🌾</motion.div>
-      <motion.h1 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }} style={{ color: "#7dffaa" }}>Kisan Saathi</motion.h1>
-      <motion.h3 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} style={{ color: "rgba(255,255,255,0.7)" }}>Hanuman Khad Bhandar</motion.h3>
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} style={{ color: "rgba(100,180,255,0.6)" }}>Vill. Hatt (Safidon), Jind</motion.p>
-      <div style={{ width: 200, height: 3, background: "rgba(100,180,255,0.1)", borderRadius: 2, margin: "15px auto 0" }}>
-        <motion.div style={{ height: 3, background: "#1e90ff", borderRadius: 2 }} initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ delay: 1.1, duration: 1.2 }} />
+    <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: colors.cream, textAlign: "center", padding: 20 }}>
+      <motion.div initial={{ y: -50 }} animate={{ y: 0 }} style={{ fontSize: 60, marginBottom: 20 }}>🌾</motion.div>
+      <h1 style={{ fontFamily: "Poppins, sans-serif", fontSize: 28, fontWeight: 700, color: colors.darkGreen, margin: "0 0 8px 0" }}>Kisan Saathi</h1>
+      <h3 style={{ fontSize: 14, color: colors.textLight, margin: "0 0 30px 0" }}>Hanuman Khad Bhandar</h3>
+      <div style={{ width: 200, height: 3, background: colors.border, borderRadius: 2, margin: "0 auto" }}>
+        <motion.div style={{ height: 3, background: colors.darkGreen, borderRadius: 2 }} initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ delay: 1, duration: 1.2 }} />
       </div>
     </motion.div>
   );
 
   if (screen === "phone") return (
-    <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
-      <div style={{ fontSize: 60 }}>📱</div>
-      <h2 style={{ color: "#7dffaa" }}>Namaste!</h2>
-      <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14 }}>Apna mobile number daalo</p>
-      <input style={inputStyle} placeholder="10 digit mobile number" value={phone} maxLength={10} type="tel"
+    <motion.div initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: colors.cream, padding: 20 }}>
+      <div style={{ fontSize: 48, marginBottom: 20 }}>📱</div>
+      <h2 style={{ fontFamily: "Poppins, sans-serif", fontSize: 20, fontWeight: 700, color: colors.darkGreen, margin: "0 0 8px 0" }}>Namaste!</h2>
+      <p style={{ color: colors.textLight, fontSize: 13, margin: "0 0 20px 0" }}>Apna mobile number daalo</p>
+      <input style={{
+        width: "80%", padding: "11px 15px", borderRadius: 10, border: `1px solid ${colors.border}`,
+        background: "white", color: colors.text, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "Inter, sans-serif"
+      }} placeholder="10 digit number" value={phone} maxLength={10} type="tel"
         onChange={e => setPhone(e.target.value.replace(/\D/g, ""))} onKeyDown={e => e.key === "Enter" && handlePhoneSubmit()} />
-      {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
-      {dbLoading ? <div style={{ color: "#7dffaa", marginTop: 12 }}>⏳ Loading...</div> :
-        <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={handlePhoneSubmit}>✅ Aage Badho</motion.button>}
+      {error && <p style={{ color: colors.danger, fontSize: 12, margin: "0 0 12px 0" }}>{error}</p>}
+      <motion.button whileTap={{ scale: 0.95 }} style={{
+        width: "80%", background: colors.darkGreen, color: "white", border: "none", borderRadius: 10,
+        padding: "11px", fontSize: 14, fontWeight: 700, cursor: "pointer"
+      }} onClick={handlePhoneSubmit}>
+        {dbLoading ? "Loading..." : "Continue"}
+      </motion.button>
     </motion.div>
   );
 
   if (screen === "fasal") return (
-    <motion.div style={authStyle} initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }}>
-      <div style={{ fontSize: 50 }}>🌾</div>
-      <h3 style={{ color: "#7dffaa" }}>Namaste!</h3>
-      <input style={inputStyle} placeholder="Apna naam likhein (optional)" value={kisanNaam} onChange={e => setKisanNaam(e.target.value)} />
-      <select style={{ ...inputStyle, appearance: "none" }} value={fasal} onChange={e => setFasal(e.target.value)}>
-        <option value="" style={{ background: "#0a0f0c" }}>-- Fasal chunein --</option>
-        {["🌾 Chawal (Rice)","🌿 Gehun (Wheat)","🟡 Sarso (Mustard)","🍬 Ganna (Sugarcane)"].map(f => <option key={f} style={{ background: "#0a0f0c" }}>{f}</option>)}
+    <motion.div initial={{ opacity: 0, x: 100 }} animate={{ opacity: 1, x: 0 }} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: colors.cream, padding: 20 }}>
+      <div style={{ fontSize: 40, marginBottom: 20 }}>🌾</div>
+      <h3 style={{ fontFamily: "Poppins, sans-serif", fontSize: 18, fontWeight: 700, color: colors.darkGreen, margin: "0 0 20px 0" }}>Apni Jaankari Bharo</h3>
+      <input style={{
+        width: "80%", padding: "11px 15px", borderRadius: 10, border: `1px solid ${colors.border}`,
+        background: "white", color: colors.text, fontSize: 14, outline: "none", marginBottom: 10, fontFamily: "Inter, sans-serif"
+      }} placeholder="Apna naam" value={kisanNaam} onChange={e => setKisanNaam(e.target.value)} />
+      <select style={{
+        width: "80%", padding: "11px 15px", borderRadius: 10, border: `1px solid ${colors.border}`,
+        background: "white", color: colors.text, fontSize: 14, outline: "none", marginBottom: 10, fontFamily: "Inter, sans-serif"
+      }} value={fasal} onChange={e => setFasal(e.target.value)}>
+        <option>-- Fasal chunein --</option>
+        <option>Chawal (Rice)</option>
+        <option>Gehun (Wheat)</option>
+        <option>Sarso (Mustard)</option>
+        <option>Ganna (Sugarcane)</option>
       </select>
-      <input style={inputStyle} type="date" value={beejDate} max={new Date().toISOString().split("T")[0]} onChange={e => setBeejDate(e.target.value)} />
-      {error && <p style={{ color: "#ff6666", fontSize: 12 }}>{error}</p>}
-      <motion.button whileTap={{ scale: 0.95 }} style={btnStyle} onClick={async () => {
-        if (!fasal || !beejDate) { setError("Fasal aur beej ki tarikh dono bharo!"); return; }
+      <input style={{
+        width: "80%", padding: "11px 15px", borderRadius: 10, border: `1px solid ${colors.border}`,
+        background: "white", color: colors.text, fontSize: 14, outline: "none", marginBottom: 12, fontFamily: "Inter, sans-serif"
+      }} type="date" value={beejDate} onChange={e => setBeejDate(e.target.value)} max={new Date().toISOString().split("T")[0]} />
+      {error && <p style={{ color: colors.danger, fontSize: 12, margin: "0 0 12px 0" }}>{error}</p>}
+      <motion.button whileTap={{ scale: 0.95 }} style={{
+        width: "80%", background: colors.darkGreen, color: "white", border: "none", borderRadius: 10,
+        padding: "11px", fontSize: 14, fontWeight: 700, cursor: "pointer"
+      }} onClick={async () => {
+        if (!fasal || !beejDate) { setError("Fasal aur tarikh zaroori hai!"); return; }
         setDbLoading(true);
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const { latitude, longitude } = pos.coords;
-            try {
-              const res = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${process.env.REACT_APP_WEATHER_KEY}`);
-              const data = await res.json();
-              const cityName = data?.[0]?.name || "Aapka Sheher";
-              setShehar(cityName);
-              const initMsgs = [{ role: "assistant", content: `Namaste ${kisanNaam || "Kisan"} ji! 🙏 Aapki ${fasal} fasal ka track shuru ho gaya!` }];
-              setMessages(initMsgs);
-              await saveData({ naam: kisanNaam, fasal, beejDate, shehar: cityName });
-              setDbLoading(false);
-              setScreen("main");
-            } catch {
-              setDbLoading(false);
-              setError("Location fetch nahi hui, dobara try karo");
-            }
-          },
-          async () => {
-            const initMsgs = [{ role: "assistant", content: `Namaste ${kisanNaam || "Kisan"} ji! 🙏` }];
-            setMessages(initMsgs);
-            await saveData({ naam: kisanNaam, fasal, beejDate, shehar: "Safidon" });
-            setDbLoading(false);
-            setScreen("main");
-          }
-        );
-      }}>{dbLoading ? "⏳ Location le rahe hain..." : "📍 Location Allow Karke Shuru Karein"}</motion.button>
+        try {
+          await saveData({ naam: kisanNaam, fasal, beejDate, shehar: "Safidon" });
+          setScreen("main");
+        } catch { setError("Error saving"); }
+        setDbLoading(false);
+      }}>
+        {dbLoading ? "Loading..." : "Start Tracking"}
+      </motion.button>
     </motion.div>
   );
 
   if (showBg) return (
-    <div style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", position: "relative", background: "#87CEEB", overflow: "hidden" }}
-      onClick={() => setShowBg(false)}>
-      <FasalBackground din={din} windSpeed={windSpeed} isRain={isRain} isNight={isNight} fasal={fasal} />
-      <div style={{ position: "absolute", bottom: 20, left: 0, right: 0, textAlign: "center", zIndex: 10 }}>
-        <div style={{ background: "rgba(0,0,0,0.5)", color: "white", padding: "8px 16px", borderRadius: 20, display: "inline-block", fontSize: 12 }}>
-          👆 Tap karke wapas jao
-        </div>
-      </div>
+    <div onClick={() => setShowBg(false)} style={{ minHeight: "100vh", maxWidth: 480, margin: "0 auto", position: "relative", background: "#87CEEB", overflow: "hidden", cursor: "pointer" }}>
+      <FasalBackground din={din} windSpeed={weather?.wind || 0} isRain={weather?.id >= 200 && weather?.id < 600} isNight={false} fasal={fasal} />
     </div>
   );
 
   return (
     <HomePage
-      db={db}
-      phone={phone}
-      kisanNaam={kisanNaam || "Kisan"}
-      shehar={shehar}
-      fasal={fasal}
-      beejDate={beejDate}
-      weather={weather}
-      forecast={forecast}
-      stage={stage}
-      advice={advice}
-      din={din}
-      alert={alert}
-      getWeatherIcon={getWeatherIcon}
-      onOpenChat={handleOpenChat}
-      onOpenQuiz={() => setPage("quiz")}
+      db={db} phone={phone} kisanNaam={kisanNaam || "Kisan"} shehar={shehar} fasal={fasal} beejDate={beejDate}
+      weather={weather} forecast={forecast} stage={stage} advice={advice} din={din} alert={null}
+      getWeatherIcon={() => "🌤️"}
+      onOpenChat={() => setPage("chat")}
+      onOpenKhata={() => setPage("khata")}
+      onOpenMandi={() => setPage("mandi")}
+      onOpenBg={() => setShowBg(true)}
       onOpenYojna={() => setPage("yojna")}
       onOpenWeather={() => setPage("weather")}
       onOpenProfile={() => setPage("profile")}
-      onOpenKhata={() => setPage("khata")}
-      onOpenMandi={() => setPage("mandi")}
       onOpenCommunity={() => setPage("community")}
-      onOpenBg={() => setShowBg(true)}
-      isNight={isNight}
-      isRain={isRain}
     />
   );
 }
