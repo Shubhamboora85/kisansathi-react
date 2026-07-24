@@ -13,7 +13,7 @@ import {
   AlertCircle, Loader, ArrowLeft, Wheat, FileText, Droplets
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
 import { 
   getFirestore, doc, setDoc, getDoc, collection, 
