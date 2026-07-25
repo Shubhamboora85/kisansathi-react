@@ -704,7 +704,7 @@ function CropTrackingPage({ onBack, fasal, beejDate, din, stage, advice }) {
       <div style={{ flex: 1, overflowY: "auto", padding: "14px", position: "relative", zIndex: 2 }}>
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
           style={{
-            background: `rgba(255, 255, 255, 0.95)`, backdropFilter: "blur(6pc)`,
+            background: `rgba(255, 255, 255, 0.95)`, backdropFilter: "blur(6px)",
             border: `1.5px solid ${C.border}`, borderRadius: 18, padding: "18px", marginBottom: 14,
             boxShadow: `0 6px 20px ${C.glow}`
           }}>
