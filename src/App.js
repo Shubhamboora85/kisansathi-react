@@ -5,9 +5,9 @@
 
 import {
   TrendingUp, Cloud, BookOpen, Users, LogOut, User, ChevronRight,
-  Search, Mic, Camera, Send, Heart, AlertCircle, Loader, ArrowLeft,
+  Search, Mic, Camera, Send, Heart, Loader, ArrowLeft,
   Wheat, FileText, Droplets, MapPin, Phone, MessageCircle, Settings,
-  Zap, Shield, Award, Leaf, Bug, Pill
+  Zap, Shield, Award, Leaf, Pill
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
