@@ -7,9 +7,9 @@ import {
   TrendingUp, Cloud, BookOpen, Users, LogOut, User, ChevronRight,
   Search, Mic, Camera, Send, Heart, Loader, ArrowLeft,
   Wheat, FileText, Droplets, MapPin, Phone, MessageCircle, Settings,
-  Zap, Shield, Award, Leaf, Pill, Home, Bell, ImageIcon
+  Zap, Shield, Award, Leaf, Pill, Home, Bell
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { initializeApp } from "firebase/app";
 import {
