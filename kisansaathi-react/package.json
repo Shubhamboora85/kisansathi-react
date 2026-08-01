@@ -1,5 +1,5 @@
 {
-  "name": "kisansaathi",
+  "name": "kisansaathi-react",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -7,13 +7,8 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
-    "axios": "^1.18.0",
-    "firebase": "^12.17.0",
-    "framer-motion": "^12.43.0",
-    "lucide-react": "^1.28.0",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "react-router-dom": "^7.18.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },

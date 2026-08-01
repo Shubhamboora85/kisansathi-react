@@ -1325,7 +1325,7 @@ function ProfilePage({ onBack, kisanNaam, phone, shehar, fasal, beejDate, db }) 
 
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             style={{
-              background: `rgba(255,255,255,0.95)`, backdropFilter: "blur(6c)`,
+              background: `rgba(255,255,255,0.95)`, backdropFilter: "blur(6px)",
               border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "14px",
               animation: "glow 3s ease-in-out infinite"
             }}>
@@ -1370,9 +1370,9 @@ function ProfilePage({ onBack, kisanNaam, phone, shehar, fasal, beejDate, db }) 
         <div style={{ flex: 1, overflowY: "auto", padding: "16px", position: "relative", zIndex: 2 }}>
           <motion.a href="mailto:support@kisansaathi.com" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             style={{
-              display: "block", background: `rgba(255,255,255,0.95)`, backdropFilter: "blur(6px)",
+              display: "flex", background: `rgba(255,255,255,0.95)`, backdropFilter: "blur(6px)",
               border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 12,
-              textDecoration: "none", display: "flex", alignItems: "center", gap: 12, cursor: "pointer",
+              textDecoration: "none", alignItems: "center", gap: 12, cursor: "pointer",
               animation: "glow 3s ease-in-out infinite"
             }}>
             <Mail size={18} color={C.darkGreen} />
@@ -1385,9 +1385,9 @@ function ProfilePage({ onBack, kisanNaam, phone, shehar, fasal, beejDate, db }) 
 
           <motion.a href="tel:+919876543210" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             style={{
-              display: "block", background: `rgba(255,255,255,0.95)`, backdropFilter: "blur(6px)",
+              display: "flex", background: `rgba(255,255,255,0.95)`, backdropFilter: "blur(6px)",
               border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 12,
-              textDecoration: "none", display: "flex", alignItems: "center", gap: 12, cursor: "pointer",
+              textDecoration: "none", alignItems: "center", gap: 12, cursor: "pointer",
               animation: "glow 3s ease-in-out infinite"
             }}>
             <Phone size={18} color={C.darkGreen} />
@@ -1478,7 +1478,7 @@ function ProfilePage({ onBack, kisanNaam, phone, shehar, fasal, beejDate, db }) 
           <motion.button key={i} whileTap={{ scale: 0.98 }} onClick={() => setActivePage(item.page)}
             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.05 * i }}
             style={{
-              width: "100%", background: `rgba(255,255,255,0.95)`, backdropFilter: "blur(6c)`,
+              width: "100%", background: `rgba(255,255,255,0.95)`, backdropFilter: "blur(6px)",
               border: `1.5px solid ${C.border}`, borderRadius: 12, padding: "13px 14px",
               display: "flex", alignItems: "center", gap: 12, cursor: "pointer",
               fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 10,
