@@ -9,7 +9,7 @@ import {
   Wheat, FileText, Droplets, MapPin, Phone, MessageCircle, Settings,
   Zap, Shield, Award, Leaf, Pill, Home, Bell, MoreVertical, Trash2,
   AlertCircle, CheckCircle, Star, Flame, Trophy, HelpCircle, Mail,
-  Github, Globe, X, Menu, Plus, Minus, Edit3, Lock, Volume2, ImagePlus
+  Terminal, Globe, X, Menu, Plus, Minus, Edit3, Lock, Volume2, ImagePlus
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -1330,7 +1330,7 @@ function ProfilePage({ onBack, kisanNaam, phone, shehar, fasal, beejDate, db }) 
               animation: "glow 3s ease-in-out infinite"
             }}>
             <h3 style={{ margin: "0 0 8px 0", fontSize: 12, fontWeight: 800, color: C.darkGreen, display: "flex", alignItems: "center", gap: 6 }}>
-              <Github size={14} />
+              <Terminal size={14} />
               Developer
             </h3>
             <p style={{ margin: "0 0 4px 0", fontSize: 10, color: C.text, fontWeight: 600 }}>Shubham Boora</p>
