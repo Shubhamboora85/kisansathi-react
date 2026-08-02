@@ -427,16 +427,16 @@ function MandiPage({ onBack }) {
     });
   }, [selectedLocation]);
 
-  const locations = ["Kanpur", "Delhi", "Pune", "Mumbai", "Ludhiana", "Jaipur", "Indore", "Nagpur"];
+  const locations = ["Kanpur", "Delhi", "Pune", "Mumbai", "Ludhiana", "Jaipur", "Indore", "Nagpur", "Safidon", "Hisar"];
 
   const handleSearch = (value) => {
     setSearchTerm(value);
-    if (value.length > 0) {
+    if (value.trim().length > 0) {
       const filtered = locations.filter(loc =>
         loc.toLowerCase().includes(value.toLowerCase())
       );
-      setSuggestions(filtered);
-      setShowSuggestions(true);
+      setSuggestions(filtered.length > 0 ? filtered : []);
+      setShowSuggestions(filtered.length > 0);
     } else {
       setSuggestions([]);
       setShowSuggestions(false);
@@ -497,7 +497,9 @@ function MandiPage({ onBack }) {
                 }}>
                 {suggestions.map((loc, i) => (
                   <motion.button key={i} whileTap={{ scale: 0.98 }}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
                       setSelectedLocation(loc);
                       setSearchTerm(loc);
                       setShowSuggestions(false);
@@ -505,7 +507,8 @@ function MandiPage({ onBack }) {
                     style={{
                       width: "100%", padding: "10px 12px", borderBottom: i < suggestions.length - 1 ? `1px solid ${C.border}` : "none",
                       background: "white", border: "none", cursor: "pointer", fontSize: 12,
-                      color: C.text, textAlign: "left", display: "flex", alignItems: "center", gap: 8
+                      color: C.text, textAlign: "left", display: "flex", alignItems: "center", gap: 8,
+                      zIndex: 210
                     }}>
                     <MapPin size={14} color={C.darkGreen} />
                     {loc}
@@ -753,12 +756,18 @@ function WeatherPage({ onBack, weather, shehar }) {
           city: data.city.name
         });
         const dailyForecasts = [];
-        for (let i = 0; i < Math.min(3, data.list.length); i += 8) {
-          dailyForecasts.push({
-            date: new Date(data.list[i].dt * 1000).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
-            temp: Math.round(data.list[i].main.temp),
-            description: data.list[i].weather[0].main
-          });
+        const seenDates = new Set();
+        for (let i = 0; i < data.list.length && dailyForecasts.length < 3; i++) {
+          const date = new Date(data.list[i].dt * 1000);
+          const dateStr = date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+          if (!seenDates.has(dateStr)) {
+            seenDates.add(dateStr);
+            dailyForecasts.push({
+              date: dateStr,
+              temp: Math.round(data.list[i].main.temp),
+              description: data.list[i].weather[0].main
+            });
+          }
         }
         setForecast(dailyForecasts);
       }
@@ -1713,6 +1722,7 @@ function App() {
   const [dbLoading, setDbLoading] = useState(false);
   const [weather, setWeather] = useState(null);
   const [error, setError] = useState("");
+  const [exitModal, setExitModal] = useState(false);
 
   useEffect(() => {
     const savedPhone = localStorage.getItem("kisan_phone");
@@ -1822,14 +1832,22 @@ function App() {
     setPage(newPage);
   };
 
-  if (page === "chat") return <ChatPage messages={messages} loading={loading} onSend={sendMessage} onBack={() => setPage("main")} />;
-  if (page === "khata") return <KhataPage phone={phone} onBack={() => setPage("main")} db={db} />;
-  if (page === "mandi") return <MandiPage onBack={() => setPage("main")} />;
-  if (page === "yojna") return <YojnaPage onBack={() => setPage("main")} />;
-  if (page === "weather") return <WeatherPage onBack={() => setPage("main")} weather={weather} shehar={shehar} />;
-  if (page === "profile") return <ProfilePage onBack={() => setPage("main")} kisanNaam={kisanNaam} phone={phone} shehar={shehar} fasal={fasal} beejDate={beejDate} db={db} />;
-  if (page === "community") return <CommunityPage onBack={() => setPage("main")} db={db} kisanNaam={kisanNaam} phone={phone} />;
-  if (page === "crop") return <CropTrackingPage onBack={() => setPage("main")} fasal={fasal} beejDate={beejDate} din={din} stage={stage} advice={advice} />;
+  const handleBack = () => {
+    if (page === "main") {
+      setExitModal(true);
+    } else {
+      setPage("main");
+    }
+  };
+
+  if (page === "chat") return <><ChatPage messages={messages} loading={loading} onSend={sendMessage} onBack={handleBack} /><BottomNav page={page} onNavigate={handleNavigate} /></>;
+  if (page === "khata") return <><KhataPage phone={phone} onBack={handleBack} db={db} /><BottomNav page={page} onNavigate={handleNavigate} /></>;
+  if (page === "mandi") return <><MandiPage onBack={handleBack} /><BottomNav page={page} onNavigate={handleNavigate} /></>;
+  if (page === "yojna") return <><YojnaPage onBack={handleBack} /><BottomNav page={page} onNavigate={handleNavigate} /></>;
+  if (page === "weather") return <><WeatherPage onBack={handleBack} weather={weather} shehar={shehar} /><BottomNav page={page} onNavigate={handleNavigate} /></>;
+  if (page === "profile") return <><ProfilePage onBack={handleBack} kisanNaam={kisanNaam} phone={phone} shehar={shehar} fasal={fasal} beejDate={beejDate} db={db} /><BottomNav page={page} onNavigate={handleNavigate} /></>;
+  if (page === "community") return <><CommunityPage onBack={handleBack} db={db} kisanNaam={kisanNaam} phone={phone} /><BottomNav page={page} onNavigate={handleNavigate} /></>;
+  if (page === "crop") return <><CropTrackingPage onBack={handleBack} fasal={fasal} beejDate={beejDate} din={din} stage={stage} advice={advice} /><BottomNav page={page} onNavigate={handleNavigate} /></>;
 
   if (screen === "splash" || (dbLoading && !kisanNaam)) return (
     <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: C.cream, textAlign: "center", padding: 20 }}>
@@ -1903,6 +1921,21 @@ function App() {
         onNavigate={handleNavigate}
       />
       <BottomNav page={page} onNavigate={handleNavigate} />
+      <AnimatePresence>
+        {exitModal && (
+          <ConfirmModal
+            title="Exit App?"
+            message="Are you sure you want to close Kisan Saathi? Your data is saved."
+            isDanger={false}
+            onConfirm={() => {
+              localStorage.removeItem("kisan_phone");
+              setScreen("phone");
+              setExitModal(false);
+            }}
+            onCancel={() => setExitModal(false)}
+          />
+        )}
+      </AnimatePresence>
       <style>{glowStyles}</style>
     </>
   );
