@@ -25,20 +25,20 @@
  * ============================================================================
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp, Cloud, Users, LogOut, User, ChevronRight,
   Search, Mic, Camera, Send, Heart, Loader, ArrowLeft,
   Wheat, FileText, Droplets, MapPin, Phone, MessageCircle, Settings,
-  Zap, Shield, Award, Leaf, Pill, Home, Bell, MoreVertical, Trash2,
+  Zap, Shield, Award, Leaf, Pill, Home, Bell, Trash2,
   AlertCircle, CheckCircle, Trophy, HelpCircle, Mail, Globe, Plus, Minus,
-  Lock, Eye, EyeOff, RefreshCw, Download, Upload, Calendar
+  Lock, Eye, EyeOff
 } from "lucide-react";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore, doc, setDoc, getDoc, collection,
-  addDoc, query, orderBy, onSnapshot, serverTimestamp, deleteDoc,
+  addDoc, query, orderBy, onSnapshot, serverTimestamp,
   updateDoc
 } from "firebase/firestore";
 
@@ -183,13 +183,6 @@ const validatePhone = (phone) => {
 };
 
 /**
- * Validate email
- */
-const validateEmail = (email) => {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-};
-
-/**
  * Format currency
  */
 const formatCurrency = (amount) => {
@@ -301,20 +294,6 @@ function ConfirmModal({ title, message, onConfirm, onCancel, isDanger = false, l
         </div>
       </motion.div>
     </motion.div>
-  );
-}
-
-// ============================================================================
-// LOADING COMPONENT
-// ============================================================================
-function LoadingSpinner({ message = "Loading..." }) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: COLORS.cream }}>
-      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
-        <Loader size={48} color={COLORS.darkGreen} />
-      </motion.div>
-      <p style={{ marginTop: 20, color: COLORS.textLight, fontSize: 14, fontWeight: 600 }}>{message}</p>
-    </div>
   );
 }
 
@@ -870,7 +849,7 @@ function FarmSetupScreen({ phone, onSubmit, loading, error }) {
 // ============================================================================
 function HomePage({ kisanNaam, shehar, fasal, beejDate, weather, onNavigate }) {
   const din = getDaysSince(beejDate);
-  const { stage, color, advice } = getCropStage(fasal, din);
+  const { stage, advice } = getCropStage(fasal, din);
   const progressPercent = Math.min((din / 120) * 100, 100);
   const ringR = 22;
   const ringCirc = 2 * Math.PI * ringR;
@@ -1589,6 +1568,7 @@ function WeatherPage({ onBack, weather, shehar }) {
     if (shehar) {
       handleSearch(shehar.split(",")[0].trim());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
