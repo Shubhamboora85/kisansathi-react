@@ -1084,17 +1084,68 @@ function HomePage({ kisanNaam, shehar, fasal, beejDate, weather, onNavigate }) {
 // ============================================================================
 // CHAT PAGE - AI ASSISTANT
 // ============================================================================
-function ChatPage({ messages, loading, onSend, onBack, farmData }) {
+function ChatPage({ messages, loading, onSend, onImageSend, onBack, farmData }) {
   const [input, setInput] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+  const [micLang, setMicLang] = useState("hi-IN");
+  const [imgLoading, setImgLoading] = useState(false);
   const messagesEndRef = React.useRef(null);
+  const fileInputRef = React.useRef(null);
+  const recognitionRef = React.useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // MIC - SPEECH TO TEXT
+  const toggleRecording = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Yeh device/browser voice input support nahi karta. Chrome browser try karein.");
+      return;
+    }
+
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = micLang;
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInput((prev) => (prev ? prev + " " + transcript : transcript));
+    };
+    recognition.onerror = () => setIsRecording(false);
+    recognition.onend = () => setIsRecording(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  };
+
+  // CAMERA - IMAGE UPLOAD & ANALYSIS
+  const handleImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      setImgLoading(true);
+      await onImageSend(reader.result);
+      setImgLoading(false);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
   return (
     <div style={{
-      minHeight: "100vh",
+      height: "100vh",
       background: `linear-gradient(135deg, ${COLORS.darkGreen} 0%, ${COLORS.lightGreen} 100%)`,
       backgroundImage: `url('/images/chatpage-bg.png')`,
       backgroundSize: "cover",
@@ -1195,6 +1246,13 @@ function ChatPage({ messages, loading, onSend, onBack, farmData }) {
                 wordWrap: "break-word",
               }}
             >
+              {msg.image && (
+                <img
+                  src={msg.image}
+                  alt="Uploaded"
+                  style={{ width: "100%", maxWidth: 200, borderRadius: 10, marginBottom: msg.content ? 8 : 0, display: "block" }}
+                />
+              )}
               {msg.content}
             </div>
           </motion.div>
@@ -1221,6 +1279,39 @@ function ChatPage({ messages, loading, onSend, onBack, farmData }) {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* LANGUAGE TOGGLE FOR MIC */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 100,
+          background: `rgba(255,255,255,0.9)`,
+          padding: "4px 12px",
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 6,
+        }}
+      >
+        <span style={{ fontSize: 9, color: COLORS.textLight, alignSelf: "center", marginRight: 2 }}>Mic bhasha:</span>
+        {[{ code: "hi-IN", label: "हिंदी" }, { code: "en-IN", label: "English" }].map((l) => (
+          <button
+            key={l.code}
+            onClick={() => setMicLang(l.code)}
+            style={{
+              padding: "3px 8px",
+              borderRadius: 8,
+              border: `1px solid ${micLang === l.code ? COLORS.darkGreen : COLORS.border}`,
+              background: micLang === l.code ? COLORS.darkGreen : "white",
+              color: micLang === l.code ? "white" : COLORS.textLight,
+              fontSize: 9,
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            {l.label}
+          </button>
+        ))}
+      </div>
+
       {/* INPUT AREA */}
       <div
         style={{
@@ -1230,16 +1321,68 @@ function ChatPage({ messages, loading, onSend, onBack, farmData }) {
           backdropFilter: "blur(12px)",
           borderTop: `1.5px solid ${COLORS.border}`,
           padding: "10px 12px",
+          paddingBottom: "calc(10px + 70px + env(safe-area-inset-bottom, 0px))",
           display: "flex",
           alignItems: "center",
           gap: 8,
+          flexShrink: 0,
         }}
       >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleImageSelect}
+          style={{ display: "none" }}
+        />
+
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => fileInputRef.current?.click()}
+          disabled={imgLoading}
+          style={{
+            background: "white",
+            border: `1.5px solid ${COLORS.border}`,
+            borderRadius: "50%",
+            width: 36,
+            height: 36,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            flexShrink: 0,
+            opacity: imgLoading ? 0.6 : 1,
+          }}
+        >
+          {imgLoading ? <Loader size={16} color={COLORS.darkGreen} className="spin" /> : <Camera size={16} color={COLORS.darkGreen} />}
+        </motion.button>
+
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleRecording}
+          style={{
+            background: isRecording ? COLORS.danger : "white",
+            border: `1.5px solid ${isRecording ? COLORS.danger : COLORS.border}`,
+            borderRadius: "50%",
+            width: 36,
+            height: 36,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            flexShrink: 0,
+            animation: isRecording ? "pulse 1s ease-in-out infinite" : "none",
+          }}
+        >
+          <Mic size={16} color={isRecording ? "white" : COLORS.darkGreen} />
+        </motion.button>
+
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && input.trim() && (onSend(input), setInput(""))}
-          placeholder="Type your question..."
+          placeholder={isRecording ? "Sun raha hoon..." : "Type your question..."}
           style={{
             flex: 1,
             padding: "10px 14px",
@@ -3355,7 +3498,7 @@ export default function App() {
           Authorization: `Bearer ${process.env.REACT_APP_GROQ_KEY}`,
         },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
+          model: "openai/gpt-oss-120b",
           max_tokens: 300,
           messages: [
             { role: "system", content: systemPrompt },
@@ -3373,6 +3516,54 @@ export default function App() {
     } catch (e) {
       console.error("Chat Error:", e);
       setMessages([...newMsgs, { role: "assistant", content: "Connection error. Please try again." }]);
+    }
+    setLoading(false);
+  };
+
+  // AI IMAGE ANALYSIS - CROP DISEASE / PRODUCT LABEL
+  const analyzeImage = async (base64Image) => {
+    const newMsgs = [...messages, { role: "user", content: "", image: base64Image }];
+    setMessages(newMsgs);
+    setLoading(true);
+
+    try {
+      const visionPrompt = `Tum ek expert Indian agriculture assistant ho. Is photo ko dhyan se dekho aur Hinglish mein jawab do:
+
+      1. Agar yeh kisi crop/paudhe/patti ki photo hai: disease ya pest ka naam batao, symptoms describe karo, aur treatment/upay batao.
+      2. Agar yeh kisi pesticide/fertilizer/dawai ki bottle/packet ki photo hai: product ka naam, usme jo main salt/chemical composition hai woh batao, yeh kis fasal aur kis samasya (keet/rog) ke liye use hoti hai woh batao. Exact dosage/mixing ratio ke liye hamesha bolo ki "packet ke label par diye instructions follow karein" kyunki photo se exact matra confirm karna risky hai.
+      3. Agar photo inme se koi bhi nahi hai, to politely batao ki yeh farming se related nahi lag raha aur puchho ki kya specifically madad chahiye.
+
+      Farmer is growing: ${farmData.fasal}, Location: ${farmData.shehar}. Concise rakho.`;
+
+      const response = await apiCall("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.REACT_APP_GROQ_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "qwen/qwen3.6-27b",
+          max_tokens: 400,
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: visionPrompt },
+                { type: "image_url", image_url: { url: base64Image } },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const jawab = response?.choices?.[0]?.message?.content;
+      setMessages([
+        ...newMsgs,
+        { role: "assistant", content: jawab || "Photo analyze nahi ho payi. Dobara try karein." },
+      ]);
+    } catch (e) {
+      console.error("Image Analysis Error:", e);
+      setMessages([...newMsgs, { role: "assistant", content: "Photo analyze karne mein error aayi. Dobara try karein." }]);
     }
     setLoading(false);
   };
@@ -3418,6 +3609,7 @@ export default function App() {
           messages={messages}
           loading={loading}
           onSend={sendMessage}
+          onImageSend={analyzeImage}
           onBack={handleBack}
           farmData={farmData}
         />
