@@ -113,12 +113,22 @@ module.exports = async function handler(req, res) {
         message: "Mandi API ne samay par jawab nahi diya.",
       });
     }
-    console.error("[api/mandi] network error:", err);
+    // Safe diagnostics only - never include the API key or the full
+    // request URL (which contains the key as a query param).
+    const diagnostic = {
+      name: err?.name || null,
+      message: err?.message || null,
+      code: err?.code || null,
+      causeCode: err?.cause?.code || null,
+      causeMessage: err?.cause?.message || null,
+    };
+    console.error("[api/mandi] network error:", diagnostic);
     return res.status(500).json({
       success: false,
       live: false,
       error: "network_error",
       message: "Mandi data laane mein network error aaya.",
+      diagnostic,
     });
   }
 };
