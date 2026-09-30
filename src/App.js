@@ -304,67 +304,49 @@ const mandiCache = {};
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
 async function fetchMandiPrices(location) {
-  console.log("🔄 Fetching mandi prices for:", location);
+  const trimmedLocation = (location || "").trim();
+  console.log("🔄 Fetching mandi prices for:", trimmedLocation);
+
+  if (!trimmedLocation) {
+    return [];
+  }
 
   // Check cache
-  if (mandiCache[location] && Date.now() - mandiCache[location].timestamp < CACHE_DURATION) {
-    console.log("✅ Using cached data for:", location);
-    return mandiCache[location].data;
+  if (mandiCache[trimmedLocation] && Date.now() - mandiCache[trimmedLocation].timestamp < CACHE_DURATION) {
+    console.log("✅ Using cached data for:", trimmedLocation);
+    return mandiCache[trimmedLocation].data;
   }
 
   try {
+    // Mandi API is called through the Vercel serverless proxy so the API key
+    // stays on the server. The proxy fetches live data from data.gov.in.
     const response = await apiCall(
-      `https://data.gov.in/api/3/action/datastore_search?resource_id=9ef84268-d588-465a-a308-a864a43d0070&filters[market]=${encodeURIComponent(location)}&limit=20`
+      `/api/mandi?location=${encodeURIComponent(trimmedLocation)}`
     );
 
-    if (response.success && response.result.records.length > 0) {
-      const formatted = response.result.records.slice(0, 12).map((r, i) => ({
-        id: i,
+    if (response?.success && Array.isArray(response.records)) {
+      const formatted = response.records.slice(0, 12).map((r, i) => ({
+        id: `${trimmedLocation}-${i}`,
         crop: r.commodity || "Wheat",
-        price: `₹${r.modal_price || r.price || "2135"}`,
-        market: r.market || location,
-        trend: Math.random() > 0.5 ? "up" : "down",
-        change: Math.floor(Math.random() * 50) + 10,
+        price: `₹${r.modal_price || r.price || "—"}`,
+        market: r.market || trimmedLocation,
+        trend: "up",
+        change: 0,
       }));
 
-      // Cache the result
-      mandiCache[location] = { data: formatted, timestamp: Date.now() };
+      // Cache only data returned for this exact location.
+      mandiCache[trimmedLocation] = { data: formatted, timestamp: Date.now() };
       return formatted;
     }
+
+    console.warn("⚠️ No live mandi records for:", trimmedLocation);
   } catch (error) {
     console.error("❌ Mandi API Error:", error);
   }
 
-  // FALLBACK - Location-specific mock data
-  const mockData = {
-    "Kanpur": [
-      { id: 1, crop: "Wheat", price: "₹2,450", market: "Kanpur", trend: "up", change: 32 },
-      { id: 2, crop: "Rice", price: "₹2,890", market: "Kanpur", trend: "up", change: 18 },
-      { id: 3, crop: "Mustard", price: "₹5,200", market: "Kanpur", trend: "down", change: 15 },
-      { id: 4, crop: "Cotton", price: "₹6,850", market: "Kanpur", trend: "down", change: 25 },
-    ],
-    "Delhi": [
-      { id: 1, crop: "Wheat", price: "₹2,480", market: "Delhi", trend: "up", change: 28 },
-      { id: 2, crop: "Rice", price: "₹2,950", market: "Delhi", trend: "up", change: 22 },
-      { id: 3, crop: "Onion", price: "₹1,850", market: "Delhi", trend: "up", change: 35 },
-      { id: 4, crop: "Potato", price: "₹1,200", market: "Delhi", trend: "down", change: 12 },
-    ],
-    "Pune": [
-      { id: 1, crop: "Sugarcane", price: "₹320", market: "Pune", trend: "up", change: 18 },
-      { id: 2, crop: "Jowar", price: "₹2,100", market: "Pune", trend: "up", change: 14 },
-      { id: 3, crop: "Turmeric", price: "₹8,500", market: "Pune", trend: "down", change: 45 },
-      { id: 4, crop: "Chilli", price: "₹6,200", market: "Pune", trend: "down", change: 28 },
-    ],
-    "Safidon": [
-      { id: 1, crop: "Wheat", price: "₹2,420", market: "Safidon", trend: "up", change: 30 },
-      { id: 2, crop: "Rice", price: "₹2,850", market: "Safidon", trend: "up", change: 16 },
-      { id: 3, crop: "Mustard", price: "₹5,150", market: "Safidon", trend: "down", change: 18 },
-      { id: 4, crop: "Gram", price: "₹4,800", market: "Safidon", trend: "up", change: 22 },
-    ],
-  };
-
-  const result = mockData[location] || mockData["Kanpur"];
-  mandiCache[location] = { data: result, timestamp: Date.now() };
+  // Never show another city's data when the requested location has no result.
+  const result = [];
+  mandiCache[trimmedLocation] = { data: result, timestamp: Date.now() };
   return result;
 }
 
@@ -1438,13 +1420,22 @@ function MandiPage({ onBack }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
+    setMandis([]);
+
     const timer = setTimeout(async () => {
       const data = await fetchMandiPrices(selectedLocation);
-      setMandis(data || []);
-      setLoading(false);
+      if (!cancelled) {
+        setMandis(data || []);
+        setLoading(false);
+      }
     }, 300);
-    return () => clearTimeout(timer);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [selectedLocation]);
 
   const locations = ["Kanpur", "Delhi", "Pune", "Safidon", "Ludhiana", "Hisar", "Jaipur", "Indore"];
@@ -1523,6 +1514,16 @@ function MandiPage({ onBack }) {
           <input
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const value = searchTerm.trim();
+                if (value) {
+                  setSelectedLocation(value);
+                  setSearchTerm(value);
+                  setShowSuggestions(false);
+                }
+              }
+            }}
             onFocus={() => searchTerm && setShowSuggestions(true)}
             placeholder="Search mandi location..."
             style={{
